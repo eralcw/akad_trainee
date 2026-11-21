@@ -7,3 +7,8 @@ data/snapshots/.staging_*
 # legado (scripts antigos ses_coleta.py / ses_trata.py)
 automacao/raw/
 automacao/processed/
+
+# secrets locais
+.streamlit/secrets.toml
+data/atualizacoes/.staging_*
+data/raw/periodos/*.tmp

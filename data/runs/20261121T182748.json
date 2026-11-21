@@ -1,0 +1,27 @@
+{
+  "run_id": "20261121T182748",
+  "comando": "periodo",
+  "inicio": "2026-11-21T18:27:30",
+  "periodo": {
+    "aprovado": true,
+    "falhas_coleta": [],
+    "publicado": true,
+    "atualizacao": "20261121T182747",
+    "linhas": 65,
+    "periodo_ini": "202510",
+    "periodo_fim": "202512",
+    "ano": 2025,
+    "mes_inicio": 10,
+    "mes_fim": 12,
+    "meses": 3,
+    "ramos": [
+      "0351"
+    ],
+    "lobs": [
+      "RCG"
+    ],
+    "parcial": true
+  },
+  "fim": "2026-11-21T18:27:48",
+  "sucesso": true
+}

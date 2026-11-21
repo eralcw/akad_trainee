@@ -3,10 +3,41 @@ name: Atualizar base SES/SUSEP
 on:
   schedule:
     - cron: "0 9 5 */3 *"   # dia 5 de jan/abr/jul/out, 09:00 UTC (trimestral)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      ramos:
+        description: "Códigos de ramo separados por vírgula (vazio = todos)"
+        required: false
+        default: ""
+      anos:
+        description: "Anos separados por vírgula (vazio = config; só para ano fechado)"
+        required: false
+        default: ""
+      periodo_ini:
+        description: "AAAAMM inicial para recorte parcial (vazio = ano fechado)"
+        required: false
+        default: ""
+      periodo_fim:
+        description: "AAAAMM final para recorte parcial"
+        required: false
+        default: ""
+      coletar:
+        description: "Baixar do SES?"
+        type: choice
+        options: ["sim", "nao"]
+        default: "sim"
+      forcar:
+        description: "Re-extrair mesmo o que já existe?"
+        type: choice
+        options: ["nao", "sim"]
+        default: "nao"
 
 permissions:
   contents: write
+
+concurrency:
+  group: ses-update
+  cancel-in-progress: false
 
 jobs:
   atualizar:
@@ -29,29 +60,64 @@ jobs:
         working-directory: automacao
         run: python -m pytest tests -q
 
-      # A coleta pode falhar (SES fora do ar ou bloqueando o IP do runner).
-      # Nesse caso seguimos com o raw/ ja versionado e o job termina em vermelho.
-      - name: Coletar no SES
-        id: coleta
+      - name: Atualizar base
+        id: atualizar
         working-directory: automacao
         continue-on-error: true
-        run: python pipeline.py coletar --headless
-
-      - name: Processar (offline) + contrato + snapshot
-        id: processar
-        working-directory: automacao
-        run: python pipeline.py processar
-
-      - name: Commit do raw e do snapshot
+        shell: bash
+        env:
+          RAMOS: ${{ inputs.ramos }}
+          ANOS: ${{ inputs.anos }}
+          PERIODO_INI: ${{ inputs.periodo_ini }}
+          PERIODO_FIM: ${{ inputs.periodo_fim }}
+          COLETAR: ${{ inputs.coletar }}
+          FORCAR: ${{ inputs.forcar }}
         run: |
+          set -euo pipefail
+          args=()
+          if [ -n "$RAMOS" ]; then
+            IFS=',' read -r -a arr <<< "$RAMOS"
+            args+=(--ramos "${arr[@]}")
+          fi
+
+          if [ -n "$PERIODO_INI" ]; then
+            if [ -z "$PERIODO_FIM" ]; then
+              echo "periodo_ini informado sem periodo_fim"; exit 2
+            fi
+            if [ "$FORCAR" = "sim" ]; then
+              args+=(--forcar)
+            fi
+            if [ "$COLETAR" = "nao" ]; then
+              python pipeline.py periodo --periodo-ini "$PERIODO_INI" --periodo-fim "$PERIODO_FIM" --offline "${args[@]}"
+            else
+              python pipeline.py periodo --periodo-ini "$PERIODO_INI" --periodo-fim "$PERIODO_FIM" --headless "${args[@]}"
+            fi
+          else
+            if [ "$COLETAR" = "nao" ]; then
+              python pipeline.py processar
+            else
+              if [ -n "$ANOS" ]; then
+                IFS=',' read -r -a arr <<< "$ANOS"
+                args+=(--anos "${arr[@]}")
+              fi
+              if [ "$FORCAR" = "sim" ]; then
+                args+=(--forcar)
+              fi
+              python pipeline.py atualizar --headless "${args[@]}"
+            fi
+          fi
+
+      - name: Commit do raw e dos snapshots
+        run: |
+          mkdir -p data/atualizacoes
           git config user.name "ses-bot"
           git config user.email "ses-bot@users.noreply.github.com"
-          git add data/raw data/snapshots data/runs
+          git add data/raw data/atualizacoes data/snapshots data/runs
           git diff --cached --quiet || git commit -m "dados: atualizacao SES $(date -u +%F)"
           git push
 
-      - name: Falhar o job se a coleta falhou (alerta por e-mail)
-        if: steps.coleta.outcome == 'failure'
+      - name: Falhar o job se a atualizacao falhou (alerta por e-mail)
+        if: steps.atualizar.outcome == 'failure'
         run: |
-          echo "Coleta no SES falhou; dashboard segue no ultimo snapshot valido."
+          echo "A atualizacao falhou. O dashboard segue no ultimo snapshot/atualizacao valida."
           exit 1

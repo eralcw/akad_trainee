@@ -1,0 +1,19 @@
+{
+  "run_id": "20261121T161654",
+  "comando": "processar",
+  "inicio": "2026-11-21T16:16:53",
+  "processamento": {
+    "aprovado": true,
+    "publicado": false,
+    "motivo": "base identica ao snapshot vigente",
+    "snapshot": "20261120T185656",
+    "diff": {
+      "linhas_alteradas": 0,
+      "linhas_novas": 0,
+      "linhas_removidas": 0,
+      "delta_premio_ganho_por_lob": {}
+    }
+  },
+  "fim": "2026-11-21T16:16:54",
+  "sucesso": true
+}

@@ -90,3 +90,66 @@ def validar(cfg: Config, base: pd.DataFrame, diagnosticos: list[Diagnostico]) ->
         },
         "linhas": int(len(base)),
     }
+
+
+def validar_periodo(
+    cfg: Config,
+    base: pd.DataFrame,
+    diagnosticos: list[Diagnostico],
+    consultas,
+) -> dict:
+    """Contrato do recorte parcial.
+
+    Nao exige as 84 consultas nem a Akad: o recorte e intencional. Exige
+    cobertura do que foi pedido, totais do SES, rodape, sem duplicata e
+    sinaliza periodo sem premio positivo.
+    """
+    erros: list[str] = []
+    avisos: list[str] = []
+
+    com_erro = [d for d in diagnosticos if d.erro]
+    for d in com_erro:
+        erros.append(f"{d.chave}: {d.erro}")
+    lidas = [d for d in diagnosticos if not d.erro]
+    vazias = [d.chave for d in lidas if d.n_seguradoras == 0]
+    if vazias:
+        avisos.append(f"consultas sem seguradoras no periodo: {vazias}")
+
+    for d in lidas:
+        for col, r in d.totais.items():
+            if not r["ok"]:
+                erros.append(
+                    f"{d.chave}: {col} nao bate com 'Totais' do SES "
+                    f"(soma={r['soma']:,.0f} oficial={r['oficial']:,.0f})"
+                )
+        if d.rodape_ok is False:
+            erros.append(f"{d.chave}: ramo/periodo do rodape do SES diferem do pedido")
+
+    n_totais_ok = sum(1 for d in lidas if d.totais and all(r["ok"] for r in d.totais.values()))
+
+    if not base.empty:
+        dups = base.duplicated(["ramo_codigo", "periodo_ini", "periodo_fim", "codigo_susep"], keep=False)
+        if dups.any():
+            erros.append(f"{int(dups.sum())} linhas duplicadas (ramo, periodo, seguradora)")
+        if int((base["premio_ganho"] > 0).sum()) == 0:
+            avisos.append("periodo sem premio ganho positivo (ramo sem movimento?)")
+        for col in COLUNAS_VALOR:
+            n_neg = int((base[col] < 0).sum())
+            if n_neg:
+                avisos.append(f"{n_neg} linhas com {col} negativo (estornos/ajustes)")
+    else:
+        avisos.append("base parcial vazia: nenhuma seguradora no periodo")
+
+    return {
+        "aprovado": not erros,
+        "erros": erros,
+        "avisos": avisos,
+        "cobertura": {
+            "esperadas": len(consultas),
+            "lidas": len(lidas),
+            "vazias": len(vazias),
+            "totais_conferidos": n_totais_ok,
+        },
+        "linhas": int(len(base)),
+        "parcial": True,
+    }

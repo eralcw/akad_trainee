@@ -47,6 +47,10 @@ COLUNAS_BASE = [
     "sinistralidade", "lucro", "margem",
     "raw_arquivo", "raw_sha256",
 ]
+COLUNAS_BASE_PERIODO = [
+    *COLUNAS_BASE,
+    "periodo_ini", "periodo_fim", "meses", "parcial",
+]
 
 
 # --------------------------------------------------------------------------
@@ -223,11 +227,16 @@ def ler_manifesto(raw_dir: Path) -> list[dict]:
 
 
 def ultimas_entradas(manifesto: list[dict]) -> dict[str, dict]:
-    """Ultima coleta bem-sucedida de cada consulta (chave = ramo_ano)."""
+    """Ultima coleta bem-sucedida de cada consulta.
+
+    Usa a chave gravada no manifesto; entradas antigas, sem `chave`, caem no
+    formato historico ramo_ano.
+    """
     ultimas: dict[str, dict] = {}
     for e in manifesto:
         if e.get("tipo") == "consulta" and e.get("status") == "ok":
-            ultimas[f"{e['ramo']}_{e['ano']}"] = e
+            chave = e.get("chave") or f"{e['ramo']}_{e['ano']}"
+            ultimas[chave] = e
     return ultimas
 
 
@@ -309,4 +318,85 @@ def construir_base(cfg: Config) -> tuple[pd.DataFrame, list[Diagnostico]]:
         base = base.reset_index(drop=True)
     else:
         base = pd.DataFrame(columns=COLUNAS_BASE)
+    return base, diagnosticos
+
+
+def construir_periodo(
+    cfg: Config,
+    consultas: list[Consulta],
+) -> tuple[pd.DataFrame, list[Diagnostico]]:
+    """Le o raw de periodos parciais e devolve (base parcial, diagnosticos).
+
+    Nao toca no snapshot anual: os arquivos ficam em data/raw/periodos e a
+    base carrega periodo_ini, periodo_fim, meses e parcial.
+    """
+    ultimas = ultimas_entradas(ler_manifesto(cfg.raw_periodos))
+    tol = cfg.contrato["tolerancia_totais"]
+
+    pedacos: list[pd.DataFrame] = []
+    diagnosticos: list[Diagnostico] = []
+
+    for c in consultas:
+        entrada = ultimas.get(c.chave)
+        if entrada is None:
+            diagnosticos.append(Diagnostico(c.chave, None, erro="consulta nao coletada"))
+            continue
+
+        caminho = cfg.raw_periodos / entrada["arquivo"]
+        diag = Diagnostico(c.chave, entrada["arquivo"], fonte=entrada.get("fonte"))
+        diagnosticos.append(diag)
+
+        if not caminho.exists():
+            diag.erro = "arquivo raw ausente"
+            continue
+        if sha256_arquivo(caminho) != entrada["sha256"]:
+            diag.hash_ok = False
+            diag.erro = "SHA-256 diverge do manifesto (raw alterado)"
+            continue
+
+        if entrada.get("fonte") == "vazio":
+            rodape = metadados_rodape(decodificar(caminho.read_bytes()))
+            diag.rodape_ok = (
+                rodape is not None
+                and rodape[0] == [c.ramo]
+                and (rodape[1], rodape[2]) == c.periodo
+            )
+            if not diag.rodape_ok:
+                diag.erro = "consulta vazia sem rodape coerente com o pedido"
+            continue
+
+        try:
+            tabela = ler_tabela(decodificar(caminho.read_bytes()))
+        except ValueError as e:
+            diag.erro = str(e)
+            continue
+
+        diag.n_seguradoras = len(tabela.corpo)
+        diag.totais = _conferir_totais(tabela.corpo, tabela.totais, tol)
+        if tabela.rodape is not None:
+            ramos, ini, fim = tabela.rodape
+            diag.rodape_ok = ramos == [c.ramo] and (ini, fim) == c.periodo
+
+        if tabela.corpo.empty:
+            continue
+        corpo = tabela.corpo.assign(
+            lob=c.lob,
+            ramo_codigo=c.ramo,
+            ano=c.ano,
+            periodo_ini=c.periodo[0],
+            periodo_fim=c.periodo[1],
+            meses=c.meses,
+            parcial=not c.completo,
+            raw_arquivo=entrada["arquivo"],
+            raw_sha256=entrada["sha256"][:12],
+        )
+        pedacos.append(adicionar_metricas(corpo))
+
+    if pedacos:
+        base = pd.concat(pedacos, ignore_index=True)[COLUNAS_BASE_PERIODO]
+        base = base.sort_values(
+            ["lob", "ano", "premio_ganho"], ascending=[True, True, False]
+        ).reset_index(drop=True)
+    else:
+        base = pd.DataFrame(columns=COLUNAS_BASE_PERIODO)
     return base, diagnosticos

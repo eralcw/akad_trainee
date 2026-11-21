@@ -141,3 +141,77 @@ def rollback(cfg: Config, destino: str | None = None) -> str:
         raise RuntimeError(f"snapshot {destino} nao existe; disponiveis: {todos}")
     _apontar(cfg, destino)
     return destino
+
+
+# --------------------------------------------------------------------------
+# Atualizacoes parciais (trimestre/mes): area separada do snapshot anual
+# --------------------------------------------------------------------------
+
+def listar_atualizacoes(cfg: Config) -> list[str]:
+    if not cfg.atualizacoes.exists():
+        return []
+    return sorted(
+        p.name for p in cfg.atualizacoes.iterdir() if (p / "base.parquet").exists()
+    )
+
+
+def atualizacao_recente(cfg: Config) -> str | None:
+    todas = listar_atualizacoes(cfg)
+    return todas[-1] if todas else None
+
+
+def carregar_atualizacao(cfg: Config, nome: str | None = None):
+    """Le uma base parcial publicada. Devolve (base, meta)."""
+    nome = nome or atualizacao_recente(cfg)
+    if nome is None:
+        raise FileNotFoundError("nenhuma atualizacao parcial publicada")
+    pasta = cfg.atualizacoes / nome
+    base = pd.read_parquet(pasta / "base.parquet")
+    meta = json.loads((pasta / "meta.json").read_text(encoding="utf-8"))
+    return base, meta
+
+
+def publicar_periodo(
+    cfg: Config,
+    base: pd.DataFrame,
+    relatorio: dict,
+    meta_periodo: dict,
+    extra_meta: dict | None = None,
+) -> dict:
+    """Publica um recorte parcial em data/atualizacoes, sem tocar no anual."""
+    if not relatorio["aprovado"]:
+        raise RuntimeError("contrato do periodo reprovado: nada foi publicado")
+
+    nome = datetime.now().strftime("%Y%m%dT%H%M%S")
+    sufixo = 0
+    while (cfg.atualizacoes / nome).exists():
+        sufixo += 1
+        nome = f"{datetime.now():%Y%m%dT%H%M%S}_{sufixo}"
+    staging = cfg.atualizacoes / f".staging_{nome}"
+    final = cfg.atualizacoes / nome
+    staging.mkdir(parents=True, exist_ok=True)
+    try:
+        base.to_parquet(staging / "base.parquet", index=False)
+        base.to_csv(staging / "base.csv", index=False, encoding="utf-8-sig")
+        meta = {
+            "atualizacao": nome,
+            "criado_em": datetime.now().isoformat(timespec="seconds"),
+            "linhas": int(len(base)),
+            "relatorio": relatorio,
+            **meta_periodo,
+            **(extra_meta or {}),
+        }
+        (staging / "meta.json").write_text(
+            json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
+        )
+        staging.rename(final)
+    except Exception:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+    cfg.atualizacoes.mkdir(parents=True, exist_ok=True)
+    ponteiro = cfg.atualizacoes / "latest.json"
+    tmp = ponteiro.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps({"atualizacao": nome}), encoding="utf-8")
+    tmp.replace(ponteiro)
+    return {"publicado": True, "atualizacao": nome, "linhas": int(len(base))}

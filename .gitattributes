@@ -1,0 +1,5 @@
+# Arquivos baixados do SES sao gravados byte a byte; normalizar fim de linha
+# quebra o SHA-256 registrado em data/raw/manifest.jsonl.
+*.xls -text
+data/raw/*.html -text
+data/raw/periodos/*.html -text

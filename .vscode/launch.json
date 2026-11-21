@@ -1,0 +1,65 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1. Status (offline)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao/pipeline.py",
+      "args": ["status"],
+      "cwd": "${workspaceFolder}/automacao",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "2. Processar raw -> contrato -> snapshot (offline)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao/pipeline.py",
+      "args": ["processar"],
+      "cwd": "${workspaceFolder}/automacao",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "3. Listar snapshots",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao/pipeline.py",
+      "args": ["snapshots"],
+      "cwd": "${workspaceFolder}/automacao",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "4. Coletar 1 consulta (navegador visivel)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao/pipeline.py",
+      "args": ["coletar", "--forcar", "--anos", "2025", "--ramos", "0351"],
+      "cwd": "${workspaceFolder}/automacao",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "5. Atualizar tudo (coleta + processa + publica)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao/pipeline.py",
+      "args": ["atualizar"],
+      "cwd": "${workspaceFolder}/automacao",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "6. Rodar testes offline",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests", "-q"],
+      "cwd": "${workspaceFolder}/automacao",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal"
+    }
+  ]
+}

@@ -51,20 +51,32 @@ def _user_agent(browser) -> str:
 # Raw imutavel + manifesto
 # --------------------------------------------------------------------------
 
-def gravar_raw(cfg: Config, c: Consulta, conteudo: bytes, fonte: str, agrupamento: str) -> dict:
-    cfg.raw.mkdir(parents=True, exist_ok=True)
+def gravar_raw(
+    cfg: Config,
+    c: Consulta,
+    conteudo: bytes,
+    fonte: str,
+    agrupamento: str,
+    pasta: Path | None = None,
+) -> dict:
+    destino_dir = pasta or cfg.raw
+    destino_dir.mkdir(parents=True, exist_ok=True)
     agora = datetime.now()
     ext = "xls" if fonte == "export_xls" else "html"
-    nome = f"ses_ramo{c.ramo}_{c.ano}_{agora:%Y%m%dT%H%M%S}.{ext}"
-    destino = cfg.raw / nome
+    sufixo = "" if c.completo else f"_{c.mes_inicio:02d}{c.mes_fim:02d}"
+    nome = f"ses_ramo{c.ramo}_{c.ano}{sufixo}_{agora:%Y%m%dT%H%M%S}.{ext}"
+    destino = destino_dir / nome
     tmp = destino.with_suffix(destino.suffix + ".tmp")
     tmp.write_bytes(conteudo)
     tmp.replace(destino)
 
     entrada = {
         "tipo": "consulta", "status": "ok",
+        "chave": c.chave,
         "lob": c.lob, "ramo": c.ramo, "ano": c.ano,
         "periodo": f"{c.periodo[0]}-{c.periodo[1]}",
+        "mes_inicio": c.mes_inicio, "mes_fim": c.mes_fim,
+        "meses": c.meses, "parcial": not c.completo,
         "agrupamento": agrupamento,
         "fonte": fonte,
         "arquivo": nome,
@@ -72,13 +84,14 @@ def gravar_raw(cfg: Config, c: Consulta, conteudo: bytes, fonte: str, agrupament
         "sha256": sha256_bytes(conteudo),
         "quando": agora.isoformat(timespec="seconds"),
     }
-    registrar(cfg, entrada)
+    registrar(cfg, entrada, pasta=destino_dir)
     return entrada
 
 
-def registrar(cfg: Config, evento: dict) -> None:
-    cfg.raw.mkdir(parents=True, exist_ok=True)
-    with (cfg.raw / "manifest.jsonl").open("a", encoding="utf-8") as f:
+def registrar(cfg: Config, evento: dict, pasta: Path | None = None) -> None:
+    destino_dir = pasta or cfg.raw
+    destino_dir.mkdir(parents=True, exist_ok=True)
+    with (destino_dir / "manifest.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(evento, ensure_ascii=False) + "\n")
 
 
@@ -87,22 +100,26 @@ def pendentes(
     forcar: bool = False,
     anos: list[int] | None = None,
     ramos: list[str] | None = None,
+    consultas: list[Consulta] | None = None,
+    pasta: Path | None = None,
 ) -> tuple[list[Consulta], list[Consulta]]:
     """Separa consultas (a coletar, a pular).
 
-    Pula o que ja existe no raw/, exceto anos em `atualizacao.reextrair_anos`
-    (retificacoes recentes) ou quando `forcar=True`.
+    Pula o que ja existe no raw, exceto anos em `atualizacao.reextrair_anos`
+    (retificacoes recentes) ou quando `forcar=True`. Para periodo parcial,
+    `pasta` aponta para data/raw/periodos e `consultas` traz o recorte.
     """
-    ultimas = ultimas_entradas(ler_manifesto(cfg.raw))
+    destino = pasta or cfg.raw
+    ultimas = ultimas_entradas(ler_manifesto(destino))
     reextrair = set(cfg.atualizacao.get("reextrair_anos") or [])
     coletar, pular = [], []
-    for c in cfg.consultas:
+    for c in (consultas or cfg.consultas):
         if anos and c.ano not in anos:
             continue
         if ramos and c.ramo not in ramos:
             continue
         existente = ultimas.get(c.chave)
-        ja_tem = existente is not None and (cfg.raw / existente["arquivo"]).exists()
+        ja_tem = existente is not None and (destino / existente["arquivo"]).exists()
         if ja_tem and not forcar and c.ano not in reextrair:
             pular.append(c)
         else:
@@ -294,10 +311,12 @@ def extrair(
     anos: list[int] | None = None,
     ramos: list[str] | None = None,
     limite: int | None = None,
+    consultas: list[Consulta] | None = None,
+    pasta: Path | None = None,
 ) -> dict:
     from playwright.sync_api import sync_playwright  # import tardio: --offline nao precisa
 
-    coletar, pular = pendentes(cfg, forcar, anos, ramos)
+    coletar, pular = pendentes(cfg, forcar, anos, ramos, consultas, pasta)
     if limite:
         coletar = coletar[:limite]
     log(f"{len(coletar)} consultas a coletar, {len(pular)} ja existentes no raw/.")
@@ -329,7 +348,7 @@ def extrair(
                     abrir_consulta(page, cfg)
                     resultado = preencher_e_processar(page, c, cfg.agrupamento)
                     conteudo, fonte = capturar(resultado, c)
-                    entrada = gravar_raw(cfg, c, conteudo, fonte, cfg.agrupamento)
+                    entrada = gravar_raw(cfg, c, conteudo, fonte, cfg.agrupamento, pasta=pasta)
                     etiqueta = "ok [vazio]" if fonte == "vazio" else f"ok [{fonte}]"
                     log(f"  {etiqueta} {entrada['arquivo']} sha256={entrada['sha256'][:12]}")
                     resumo["coletadas"].append(c.chave)
@@ -352,10 +371,12 @@ def extrair(
                     time.sleep(min(60, 5 * t * t))
             else:
                 registrar(cfg, {
-                    "tipo": "consulta", "status": "falha", "ramo": c.ramo, "ano": c.ano,
+                    "tipo": "consulta", "status": "falha",
+                    "chave": c.chave, "ramo": c.ramo, "ano": c.ano,
+                    "periodo": f"{c.periodo[0]}-{c.periodo[1]}",
                     "erro": ultimo_erro,
                     "quando": datetime.now().isoformat(timespec="seconds"),
-                })
+                }, pasta=pasta)
                 resumo["falhas"].append(c.chave)
                 resumo["erros"][c.chave] = ultimo_erro
             time.sleep(pausa)
