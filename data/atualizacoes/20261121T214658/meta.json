@@ -1,0 +1,46 @@
+{
+  "atualizacao": "20261121T214658",
+  "criado_em": "2026-11-21T21:46:58",
+  "linhas": 0,
+  "relatorio": {
+    "aprovado": true,
+    "erros": [],
+    "avisos": [
+      "consultas sem seguradoras no periodo: ['0351_2026_10_12']",
+      "base parcial vazia: nenhuma seguradora no periodo"
+    ],
+    "cobertura": {
+      "esperadas": 1,
+      "lidas": 1,
+      "vazias": 1,
+      "totais_conferidos": 0
+    },
+    "linhas": 0,
+    "parcial": true
+  },
+  "periodo_ini": "202610",
+  "periodo_fim": "202612",
+  "ano": 2026,
+  "mes_inicio": 10,
+  "mes_fim": 12,
+  "meses": 3,
+  "ramos": [
+    "0351"
+  ],
+  "lobs": [
+    "RCG"
+  ],
+  "parcial": true,
+  "diagnosticos": [
+    {
+      "chave": "0351_2026_10_12",
+      "arquivo": "ses_ramo0351_2026_1012_20261121T214655.html",
+      "fonte": "vazio",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 0,
+      "totais": {},
+      "rodape_ok": true
+    }
+  ]
+}
