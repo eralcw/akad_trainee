@@ -1,0 +1,218 @@
+[18:20:40] 83 consultas a coletar, 1 ja existentes no raw/.
+[18:20:41] RCG 0351 2020: tentativa 1/3
+[18:20:51]   ok [export_xls] ses_ramo0351_2020_20261120T182051.xls sha256=a8b46a91bdd3
+[18:20:54] RCG 0351 2021: tentativa 1/3
+[18:21:00]   ok [export_xls] ses_ramo0351_2021_20261120T182100.xls sha256=2204a3537551
+[18:21:03] RCG 0351 2022: tentativa 1/3
+[18:21:08]   ok [export_xls] ses_ramo0351_2022_20261120T182108.xls sha256=395de6d8c18f
+[18:21:11] RCG 0351 2023: tentativa 1/3
+[18:21:17]   ok [export_xls] ses_ramo0351_2023_20261120T182117.xls sha256=9941e4feb30b
+[18:21:20] RCG 0351 2024: tentativa 1/3
+[18:21:25]   ok [export_xls] ses_ramo0351_2024_20261120T182125.xls sha256=0e87434642b6
+[18:21:28] E&O 0378 2020: tentativa 1/3
+[18:21:34]   ok [export_xls] ses_ramo0378_2020_20261120T182134.xls sha256=fe87f848ca53
+[18:21:37] E&O 0378 2021: tentativa 1/3
+[18:21:43]   ok [export_xls] ses_ramo0378_2021_20261120T182143.xls sha256=4dd87a79cc19
+[18:21:46] E&O 0378 2022: tentativa 1/3
+[18:21:52]   ok [export_xls] ses_ramo0378_2022_20261120T182152.xls sha256=4927ef3a8d16
+[18:21:55] E&O 0378 2023: tentativa 1/3
+[18:22:01]   ok [export_xls] ses_ramo0378_2023_20261120T182201.xls sha256=d8f55ad8d3aa
+[18:22:04] E&O 0378 2024: tentativa 1/3
+[18:22:09]   ok [export_xls] ses_ramo0378_2024_20261120T182209.xls sha256=85efc7912a20
+[18:22:12] E&O 0378 2025: tentativa 1/3
+[18:22:18]   ok [export_xls] ses_ramo0378_2025_20261120T182218.xls sha256=ec82b86b9b92
+[18:22:21] Empresarial 0118 2020: tentativa 1/3
+[18:22:29]   ok [export_xls] ses_ramo0118_2020_20261120T182229.xls sha256=b55b5aa56ba3
+[18:22:32] Empresarial 0118 2021: tentativa 1/3
+[18:22:38]   ok [export_xls] ses_ramo0118_2021_20261120T182238.xls sha256=9b3939ae6cd1
+[18:22:41] Empresarial 0118 2022: tentativa 1/3
+[18:22:46]   ok [export_xls] ses_ramo0118_2022_20261120T182246.xls sha256=c61d9799a5a6
+[18:22:49] Empresarial 0118 2023: tentativa 1/3
+[18:22:55]   ok [export_xls] ses_ramo0118_2023_20261120T182255.xls sha256=d659f48060aa
+[18:22:58] Empresarial 0118 2024: tentativa 1/3
+[18:23:03]   ok [export_xls] ses_ramo0118_2024_20261120T182303.xls sha256=b28e27192404
+[18:23:06] Empresarial 0118 2025: tentativa 1/3
+[18:23:11]   ok [export_xls] ses_ramo0118_2025_20261120T182311.xls sha256=1a9fa1dcca2e
+[18:23:14] Transportes 0621 2020: tentativa 1/3
+[18:23:20]   ok [export_xls] ses_ramo0621_2020_20261120T182320.xls sha256=d8b367373013
+[18:23:23] Transportes 0621 2021: tentativa 1/3
+[18:23:29]   ok [export_xls] ses_ramo0621_2021_20261120T182329.xls sha256=7497b300167c
+[18:23:32] Transportes 0621 2022: tentativa 1/3
+[18:23:37]   ok [export_xls] ses_ramo0621_2022_20261120T182337.xls sha256=e4afaa4454c9
+[18:23:40] Transportes 0621 2023: tentativa 1/3
+[18:23:46]   ok [export_xls] ses_ramo0621_2023_20261120T182346.xls sha256=08d54b0e7d77
+[18:23:49] Transportes 0621 2024: tentativa 1/3
+[18:23:54]   ok [export_xls] ses_ramo0621_2024_20261120T182354.xls sha256=37b1fa702811
+[18:23:57] Transportes 0621 2025: tentativa 1/3
+[18:24:03]   ok [export_xls] ses_ramo0621_2025_20261120T182403.xls sha256=83261d4362aa
+[18:24:06] Transportes 0622 2020: tentativa 1/3
+[18:24:11]   ok [export_xls] ses_ramo0622_2020_20261120T182411.xls sha256=f389e9c7e936
+[18:24:14] Transportes 0622 2021: tentativa 1/3
+[18:24:20]   ok [export_xls] ses_ramo0622_2021_20261120T182420.xls sha256=c0c686fedff2
+[18:24:23] Transportes 0622 2022: tentativa 1/3
+[18:24:28]   ok [export_xls] ses_ramo0622_2022_20261120T182428.xls sha256=9b2739352f04
+[18:24:31] Transportes 0622 2023: tentativa 1/3
+[18:24:36]   ok [export_xls] ses_ramo0622_2023_20261120T182436.xls sha256=074cb50b6ab5
+[18:24:39] Transportes 0622 2024: tentativa 1/3
+[18:24:45]   ok [export_xls] ses_ramo0622_2024_20261120T182445.xls sha256=f3e5907f2e88
+[18:24:48] Transportes 0622 2025: tentativa 1/3
+[18:24:53]   ok [export_xls] ses_ramo0622_2025_20261120T182453.xls sha256=a29c07d82cc6
+[18:24:56] Transportes 0632 2020: tentativa 1/3
+[18:25:02]   ok [export_xls] ses_ramo0632_2020_20261120T182502.xls sha256=f7bd2c62743a
+[18:25:05] Transportes 0632 2021: tentativa 1/3
+[18:25:10]   ok [export_xls] ses_ramo0632_2021_20261120T182510.xls sha256=776b48303c6b
+[18:25:13] Transportes 0632 2022: tentativa 1/3
+[18:25:19]   ok [export_xls] ses_ramo0632_2022_20261120T182519.xls sha256=7b40a114f8f2
+[18:25:22] Transportes 0632 2023: tentativa 1/3
+[18:25:27]   ok [export_xls] ses_ramo0632_2023_20261120T182527.xls sha256=e4a32a8df18b
+[18:25:30] Transportes 0632 2024: tentativa 1/3
+[18:25:35]   ok [export_xls] ses_ramo0632_2024_20261120T182535.xls sha256=34fa19e3d058
+[18:25:38] Transportes 0632 2025: tentativa 1/3
+[18:25:43]   ok [export_xls] ses_ramo0632_2025_20261120T182543.xls sha256=ea276acb87c8
+[18:25:46] Transportes 0644 2020: tentativa 1/3
+[18:25:52]   ok [export_xls] ses_ramo0644_2020_20261120T182552.xls sha256=8b35e91d6b60
+[18:25:55] Transportes 0644 2021: tentativa 1/3
+[18:26:00]   ok [export_xls] ses_ramo0644_2021_20261120T182600.xls sha256=47049d1221cf
+[18:26:03] Transportes 0644 2022: tentativa 1/3
+[18:26:08]   ok [export_xls] ses_ramo0644_2022_20261120T182608.xls sha256=9213fb7a2dff
+[18:26:11] Transportes 0644 2023: tentativa 1/3
+[18:26:17]   ok [export_xls] ses_ramo0644_2023_20261120T182617.xls sha256=ef3016f5569a
+[18:26:20] Transportes 0644 2024: tentativa 1/3
+[18:26:25]   ok [export_xls] ses_ramo0644_2024_20261120T182625.xls sha256=1d67ac296ce2
+[18:26:28] Transportes 0644 2025: tentativa 1/3
+[18:26:34]   ok [export_xls] ses_ramo0644_2025_20261120T182634.xls sha256=165861522fd6
+[18:26:37] Transportes 0645 2020: tentativa 1/3
+[18:26:42]   export baixado mas sem tabela valida; usando HTML da tela
+[18:26:42]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:26:47] Transportes 0645 2020: tentativa 2/3
+[18:26:52]   export baixado mas sem tabela valida; usando HTML da tela
+[18:26:52]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:27:12] Transportes 0645 2020: tentativa 3/3
+[18:27:18]   export baixado mas sem tabela valida; usando HTML da tela
+[18:27:18]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:28:06] Transportes 0645 2021: tentativa 1/3
+[18:28:12]   export baixado mas sem tabela valida; usando HTML da tela
+[18:28:12]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:28:17] Transportes 0645 2021: tentativa 2/3
+[18:28:22]   export baixado mas sem tabela valida; usando HTML da tela
+[18:28:22]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:28:42] Transportes 0645 2021: tentativa 3/3
+[18:28:47]   export baixado mas sem tabela valida; usando HTML da tela
+[18:28:47]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:29:35] Transportes 0645 2022: tentativa 1/3
+[18:29:41]   export baixado mas sem tabela valida; usando HTML da tela
+[18:29:41]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:29:46] Transportes 0645 2022: tentativa 2/3
+[18:29:51]   export baixado mas sem tabela valida; usando HTML da tela
+[18:29:51]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:30:11] Transportes 0645 2022: tentativa 3/3
+[18:30:16]   export baixado mas sem tabela valida; usando HTML da tela
+[18:30:16]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:31:04] Transportes 0645 2023: tentativa 1/3
+[18:31:09]   export baixado mas sem tabela valida; usando HTML da tela
+[18:31:09]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:31:14] Transportes 0645 2023: tentativa 2/3
+[18:31:20]   export baixado mas sem tabela valida; usando HTML da tela
+[18:31:20]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:31:40] Transportes 0645 2023: tentativa 3/3
+[18:31:45]   export baixado mas sem tabela valida; usando HTML da tela
+[18:31:45]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:32:33] Transportes 0645 2024: tentativa 1/3
+[18:32:39]   export baixado mas sem tabela valida; usando HTML da tela
+[18:32:39]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:32:44] Transportes 0645 2024: tentativa 2/3
+[18:32:49]   export baixado mas sem tabela valida; usando HTML da tela
+[18:32:49]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:33:09] Transportes 0645 2024: tentativa 3/3
+[18:33:15]   export baixado mas sem tabela valida; usando HTML da tela
+[18:33:15]   falhou: nem o export nem a tela trouxeram a tabela do SES
+[18:34:03] Transportes 0645 2025: tentativa 1/3
+[18:34:08]   ok [export_xls] ses_ramo0645_2025_20261120T183408.xls sha256=b1619e7a07c6
+[18:34:11] Transportes 0652 2020: tentativa 1/3
+[18:34:16]   ok [export_xls] ses_ramo0652_2020_20261120T183416.xls sha256=4a7c40ce1569
+[18:34:19] Transportes 0652 2021: tentativa 1/3
+[18:34:25]   ok [export_xls] ses_ramo0652_2021_20261120T183425.xls sha256=95b9e15f55a5
+[18:34:28] Transportes 0652 2022: tentativa 1/3
+[18:34:33]   ok [export_xls] ses_ramo0652_2022_20261120T183433.xls sha256=1e49aff9f1ad
+[18:34:36] Transportes 0652 2023: tentativa 1/3
+[18:34:41]   ok [export_xls] ses_ramo0652_2023_20261120T183441.xls sha256=35330dd91cc7
+[18:34:44] Transportes 0652 2024: tentativa 1/3
+[18:34:50]   ok [export_xls] ses_ramo0652_2024_20261120T183450.xls sha256=a68c165f7141
+[18:34:53] Transportes 0652 2025: tentativa 1/3
+[18:34:59]   ok [export_xls] ses_ramo0652_2025_20261120T183459.xls sha256=31befdfa9c04
+[18:35:02] Transportes 0654 2020: tentativa 1/3
+[18:35:07]   ok [export_xls] ses_ramo0654_2020_20261120T183507.xls sha256=b2e51bb0a7a8
+[18:35:10] Transportes 0654 2021: tentativa 1/3
+[18:35:15]   ok [export_xls] ses_ramo0654_2021_20261120T183515.xls sha256=c3ca444ff0e5
+[18:35:18] Transportes 0654 2022: tentativa 1/3
+[18:35:24]   ok [export_xls] ses_ramo0654_2022_20261120T183524.xls sha256=0b9dad8aa6ad
+[18:35:27] Transportes 0654 2023: tentativa 1/3
+[18:35:32]   ok [export_xls] ses_ramo0654_2023_20261120T183532.xls sha256=47c455c40fc2
+[18:35:35] Transportes 0654 2024: tentativa 1/3
+[18:35:40]   ok [export_xls] ses_ramo0654_2024_20261120T183540.xls sha256=9f174b635140
+[18:35:43] Transportes 0654 2025: tentativa 1/3
+[18:35:48]   ok [export_xls] ses_ramo0654_2025_20261120T183548.xls sha256=4658ccf9fd9b
+[18:35:51] Transportes 0655 2020: tentativa 1/3
+[18:35:57]   ok [export_xls] ses_ramo0655_2020_20261120T183557.xls sha256=98b4f17cfa62
+[18:36:00] Transportes 0655 2021: tentativa 1/3
+[18:36:05]   ok [export_xls] ses_ramo0655_2021_20261120T183605.xls sha256=a3544dcb5ff9
+[18:36:08] Transportes 0655 2022: tentativa 1/3
+[18:36:13]   ok [export_xls] ses_ramo0655_2022_20261120T183613.xls sha256=fc9dde920e03
+[18:36:16] Transportes 0655 2023: tentativa 1/3
+[18:36:22]   ok [export_xls] ses_ramo0655_2023_20261120T183622.xls sha256=a8b92815f071
+[18:36:25] Transportes 0655 2024: tentativa 1/3
+[18:36:30]   ok [export_xls] ses_ramo0655_2024_20261120T183630.xls sha256=34aad30328b7
+[18:36:33] Transportes 0655 2025: tentativa 1/3
+[18:36:39]   ok [export_xls] ses_ramo0655_2025_20261120T183639.xls sha256=8b3870123227
+[18:36:42] Transportes 0656 2020: tentativa 1/3
+[18:36:47]   ok [export_xls] ses_ramo0656_2020_20261120T183647.xls sha256=3d5d87af5013
+[18:36:50] Transportes 0656 2021: tentativa 1/3
+[18:36:55]   ok [export_xls] ses_ramo0656_2021_20261120T183655.xls sha256=249b4cff0400
+[18:36:58] Transportes 0656 2022: tentativa 1/3
+[18:37:04]   ok [export_xls] ses_ramo0656_2022_20261120T183704.xls sha256=958f21a5e172
+[18:37:07] Transportes 0656 2023: tentativa 1/3
+[18:37:12]   ok [export_xls] ses_ramo0656_2023_20261120T183712.xls sha256=95306e99c6e8
+[18:37:15] Transportes 0656 2024: tentativa 1/3
+[18:37:20]   ok [export_xls] ses_ramo0656_2024_20261120T183720.xls sha256=480535c0151c
+[18:37:23] Transportes 0656 2025: tentativa 1/3
+[18:37:29]   ok [export_xls] ses_ramo0656_2025_20261120T183729.xls sha256=c91220551db0
+[18:37:32] Garantia 0775 2020: tentativa 1/3
+[18:37:37]   ok [export_xls] ses_ramo0775_2020_20261120T183737.xls sha256=51fe59e5e4d7
+[18:37:40] Garantia 0775 2021: tentativa 1/3
+[18:37:46]   ok [export_xls] ses_ramo0775_2021_20261120T183746.xls sha256=6f7bbaa9e555
+[18:37:49] Garantia 0775 2022: tentativa 1/3
+[18:37:54]   ok [export_xls] ses_ramo0775_2022_20261120T183754.xls sha256=67a41d2f29fb
+[18:37:57] Garantia 0775 2023: tentativa 1/3
+[18:38:03]   ok [export_xls] ses_ramo0775_2023_20261120T183803.xls sha256=dc5083a8dc9e
+[18:38:06] Garantia 0775 2024: tentativa 1/3
+[18:38:11]   ok [export_xls] ses_ramo0775_2024_20261120T183811.xls sha256=0261752332a0
+[18:38:14] Garantia 0775 2025: tentativa 1/3
+[18:38:19]   ok [export_xls] ses_ramo0775_2025_20261120T183819.xls sha256=4d7fc19352f8
+[18:38:22] Garantia 0776 2020: tentativa 1/3
+[18:38:28]   ok [export_xls] ses_ramo0776_2020_20261120T183828.xls sha256=e546e8dbf3e5
+[18:38:31] Garantia 0776 2021: tentativa 1/3
+[18:38:36]   ok [export_xls] ses_ramo0776_2021_20261120T183836.xls sha256=21c333ba2d8d
+[18:38:39] Garantia 0776 2022: tentativa 1/3
+[18:38:44]   ok [export_xls] ses_ramo0776_2022_20261120T183844.xls sha256=0e2315efaddd
+[18:38:47] Garantia 0776 2023: tentativa 1/3
+[18:38:53]   ok [export_xls] ses_ramo0776_2023_20261120T183853.xls sha256=7c06b068de8d
+[18:38:56] Garantia 0776 2024: tentativa 1/3
+[18:39:01]   ok [export_xls] ses_ramo0776_2024_20261120T183901.xls sha256=0950a7865959
+[18:39:04] Garantia 0776 2025: tentativa 1/3
+[18:39:10]   ok [export_xls] ses_ramo0776_2025_20261120T183910.xls sha256=f5d8ea5b49cc
+
+Coleta: 78 novas, 1 ja existiam, 5 falhas.
+Cobertura: 79/84 consultas lidas, 79 conferidas com 'Totais' do SES, 4007 linhas.
+  aviso: 52 linhas com premio_ganho negativo (estornos/ajustes) - conferir sinal
+  aviso: 429 linhas com sinistro_ocorrido negativo (estornos/ajustes) - conferir sinal
+  aviso: 55 linhas com despesa_resseguro negativo (estornos/ajustes) - conferir sinal
+  aviso: 500 linhas com receita_resseguro negativo (estornos/ajustes) - conferir sinal
+  aviso: 56 linhas com despesa_comercial negativo (estornos/ajustes) - conferir sinal
+
+CONTRATO REPROVADO (5 erros). Snapshot NAO publicado.
+  x 0645_2020: consulta nao coletada
+  x 0645_2021: consulta nao coletada
+  x 0645_2022: consulta nao coletada
+  x 0645_2023: consulta nao coletada
+  x 0645_2024: consulta nao coletada
+Dashboard segue no snapshot: None

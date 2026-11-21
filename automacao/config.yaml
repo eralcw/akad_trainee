@@ -1,0 +1,52 @@
+# Configuracao da automacao SES/SUSEP - Case Trainee Akad 2027
+# Para incluir um ramo, LOB ou ano, basta editar este arquivo (nenhum codigo muda).
+
+fonte:
+  url: "https://www2.susep.gov.br/menuestatistica/ses/principal.aspx"
+  consulta: "Seguros: Prêmios e Sinistros"   # comparado sem acento
+  agrupamento: "Empresa"
+
+periodo:
+  ano_inicio: 2020
+  ano_fim: 2025
+
+# LOB do case -> codigos de ramo SUSEP
+lobs:
+  RCG: ["0351"]
+  E&O: ["0378"]
+  Empresarial: ["0118"]
+  Transportes: ["0621", "0622", "0632", "0644", "0645", "0652", "0654", "0655", "0656"]
+  Garantia: ["0775", "0776"]
+
+# Empresa-alvo do case (codigo SUSEP; ver coluna "Codigo SUSEP" do SES)
+akad:
+  codigo_susep: "02798"
+  nome: "AKAD SEGUROS S.A."
+
+# Politica de atualizacao
+atualizacao:
+  # Anos que SEMPRE sao re-extraidos (retificacoes recentes da SUSEP).
+  # Deixe vazio para coletar so o que ainda nao existe no raw/.
+  reextrair_anos: []
+  pausa_entre_consultas_s: 3
+  tentativas: 3
+
+# Contrato de dados (validate.py). Reprovou -> nao publica o snapshot.
+contrato:
+  # tolerancia relativa na reconciliacao com a linha "Totais" do SES
+  tolerancia_totais: 0.0005
+  # colunas que nao podem ficar todas zeradas em um ramo/ano com seguradoras
+  colunas_obrigatorias:
+    - premio_ganho
+    - sinistro_ocorrido
+    - despesa_resseguro
+    - receita_resseguro
+    - despesa_comercial
+  # um ramo/ano pode legitimamente vir vazio (ramo sem mercado); acima deste
+  # numero de combinacoes vazias o contrato falha
+  max_consultas_vazias: 6
+
+pastas:
+  raw: "data/raw"
+  snapshots: "data/snapshots"
+  runs: "data/runs"

@@ -1,0 +1,3317 @@
+{
+  "snapshot": "20261120T185656",
+  "criado_em": "2026-11-20T18:56:56",
+  "linhas": 4007,
+  "relatorio": {
+    "aprovado": true,
+    "erros": [],
+    "avisos": [
+      "consultas sem seguradoras (ramo sem mercado no ano?): ['0645_2020', '0645_2021', '0645_2022', '0645_2023', '0645_2024']",
+      "52 linhas com premio_ganho negativo (estornos/ajustes) - conferir sinal",
+      "429 linhas com sinistro_ocorrido negativo (estornos/ajustes) - conferir sinal",
+      "55 linhas com despesa_resseguro negativo (estornos/ajustes) - conferir sinal",
+      "500 linhas com receita_resseguro negativo (estornos/ajustes) - conferir sinal",
+      "56 linhas com despesa_comercial negativo (estornos/ajustes) - conferir sinal"
+    ],
+    "cobertura": {
+      "esperadas": 84,
+      "lidas": 84,
+      "vazias": 5,
+      "totais_conferidos": 79
+    },
+    "linhas": 4007
+  },
+  "diff_vs_anterior": null,
+  "anterior": null,
+  "diagnosticos": [
+    {
+      "chave": "0351_2020",
+      "arquivo": "ses_ramo0351_2020_20261120T182051.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 70,
+      "totais": {
+        "premio_ganho": {
+          "soma": 998945450.0,
+          "oficial": 998945450.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 441397035.0,
+          "oficial": 441397037.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 367227342.0,
+          "oficial": 367227342.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 187867314.0,
+          "oficial": 187867312.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 175870801.0,
+          "oficial": 175870802.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0351_2021",
+      "arquivo": "ses_ramo0351_2021_20261120T182100.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 68,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1195031341.0,
+          "oficial": 1195031339.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 608701877.0,
+          "oficial": 608701877.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 489576551.0,
+          "oficial": 489576546.0,
+          "dif": 5.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 307707549.0,
+          "oficial": 307707553.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 189980099.0,
+          "oficial": 189980095.0,
+          "dif": 4.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0351_2022",
+      "arquivo": "ses_ramo0351_2022_20261120T182108.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1412706133.0,
+          "oficial": 1412706133.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 592591708.0,
+          "oficial": 592591711.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 535224557.0,
+          "oficial": 535224559.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 207048327.0,
+          "oficial": 207048326.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 225038059.0,
+          "oficial": 225038058.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0351_2023",
+      "arquivo": "ses_ramo0351_2023_20261120T182117.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 62,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1694280947.0,
+          "oficial": 1694280946.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1564890782.0,
+          "oficial": 1564890779.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 610012188.0,
+          "oficial": 610012185.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 1098746741.0,
+          "oficial": 1098746742.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 274757481.0,
+          "oficial": 274757479.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0351_2024",
+      "arquivo": "ses_ramo0351_2024_20261120T182125.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1901060956.0,
+          "oficial": 1901060954.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 612107229.0,
+          "oficial": 612107231.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 669872261.0,
+          "oficial": 669872264.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 316061285.0,
+          "oficial": 316061284.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 316566160.0,
+          "oficial": 316566161.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0351_2025",
+      "arquivo": "ses_ramo0351_2025_20261120T181544.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 67,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1923482260.0,
+          "oficial": 1923482261.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 990940303.0,
+          "oficial": 990940302.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 746470017.0,
+          "oficial": 746470018.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 557400288.0,
+          "oficial": 557400288.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 305859042.0,
+          "oficial": 305859041.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0378_2020",
+      "arquivo": "ses_ramo0378_2020_20261120T182134.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 60,
+      "totais": {
+        "premio_ganho": {
+          "soma": 425873076.0,
+          "oficial": 425873073.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 170141764.0,
+          "oficial": 170141764.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 97002768.0,
+          "oficial": 97002769.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 50217482.0,
+          "oficial": 50217483.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 84334854.0,
+          "oficial": 84334854.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0378_2021",
+      "arquivo": "ses_ramo0378_2021_20261120T182143.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 60,
+      "totais": {
+        "premio_ganho": {
+          "soma": 495541089.0,
+          "oficial": 495541091.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 252374384.0,
+          "oficial": 252374385.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 109225493.0,
+          "oficial": 109225493.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 85785121.0,
+          "oficial": 85785122.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 97305187.0,
+          "oficial": 97305187.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0378_2022",
+      "arquivo": "ses_ramo0378_2022_20261120T182152.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 58,
+      "totais": {
+        "premio_ganho": {
+          "soma": 559192630.0,
+          "oficial": 559192628.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 258087399.0,
+          "oficial": 258087399.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 122472142.0,
+          "oficial": 122472144.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 60409887.0,
+          "oficial": 60409887.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 111938466.0,
+          "oficial": 111938465.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0378_2023",
+      "arquivo": "ses_ramo0378_2023_20261120T182201.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 55,
+      "totais": {
+        "premio_ganho": {
+          "soma": 656020679.0,
+          "oficial": 656020679.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 290159817.0,
+          "oficial": 290159817.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 142960844.0,
+          "oficial": 142960843.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 80723207.0,
+          "oficial": 80723205.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 131643963.0,
+          "oficial": 131643962.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0378_2024",
+      "arquivo": "ses_ramo0378_2024_20261120T182209.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 59,
+      "totais": {
+        "premio_ganho": {
+          "soma": 753924582.0,
+          "oficial": 753924582.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 208284180.0,
+          "oficial": 208284178.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 153273813.0,
+          "oficial": 153273812.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 34898382.0,
+          "oficial": 34898382.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 153215457.0,
+          "oficial": 153215461.0,
+          "dif": 4.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0378_2025",
+      "arquivo": "ses_ramo0378_2025_20261120T182218.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 61,
+      "totais": {
+        "premio_ganho": {
+          "soma": 888662769.0,
+          "oficial": 888662768.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 312762883.0,
+          "oficial": 312762882.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 177969820.0,
+          "oficial": 177969819.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 79373301.0,
+          "oficial": 79373302.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 186541954.0,
+          "oficial": 186541954.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0118_2020",
+      "arquivo": "ses_ramo0118_2020_20261120T182229.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 2577067594.0,
+          "oficial": 2577067592.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1611815124.0,
+          "oficial": 1611815127.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 480408576.0,
+          "oficial": 480408575.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 652005838.0,
+          "oficial": 652005838.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 730191293.0,
+          "oficial": 730191293.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0118_2021",
+      "arquivo": "ses_ramo0118_2021_20261120T182238.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 2819143846.0,
+          "oficial": 2819143850.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1591256585.0,
+          "oficial": 1591256585.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 646649119.0,
+          "oficial": 646649119.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 641609440.0,
+          "oficial": 641609439.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 787402179.0,
+          "oficial": 787402174.0,
+          "dif": 5.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0118_2022",
+      "arquivo": "ses_ramo0118_2022_20261120T182246.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 3160409202.0,
+          "oficial": 3160409200.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1689167896.0,
+          "oficial": 1689167898.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 541047832.0,
+          "oficial": 541047834.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 482765036.0,
+          "oficial": 482765032.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 862912359.0,
+          "oficial": 862912360.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0118_2023",
+      "arquivo": "ses_ramo0118_2023_20261120T182255.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 3618913820.0,
+          "oficial": 3618913821.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1745513249.0,
+          "oficial": 1745513247.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 634974701.0,
+          "oficial": 634974702.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 455032132.0,
+          "oficial": 455032133.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 978353545.0,
+          "oficial": 978353549.0,
+          "dif": 4.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0118_2024",
+      "arquivo": "ses_ramo0118_2024_20261120T182303.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 70,
+      "totais": {
+        "premio_ganho": {
+          "soma": 4092285299.0,
+          "oficial": 4092285301.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1790857613.0,
+          "oficial": 1790857612.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 725374084.0,
+          "oficial": 725374086.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 519224011.0,
+          "oficial": 519224010.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 1131956394.0,
+          "oficial": 1131956395.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0118_2025",
+      "arquivo": "ses_ramo0118_2025_20261120T182311.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 71,
+      "totais": {
+        "premio_ganho": {
+          "soma": 4628284861.0,
+          "oficial": 4628284862.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1867651174.0,
+          "oficial": 1867651171.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 825344057.0,
+          "oficial": 825344057.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 526926957.0,
+          "oficial": 526926959.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 1293698450.0,
+          "oficial": 1293698452.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0621_2020",
+      "arquivo": "ses_ramo0621_2020_20261120T182320.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 62,
+      "totais": {
+        "premio_ganho": {
+          "soma": 904686051.0,
+          "oficial": 904686052.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 509545948.0,
+          "oficial": 509545946.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 291685628.0,
+          "oficial": 291685628.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 211946057.0,
+          "oficial": 211946058.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 181146524.0,
+          "oficial": 181146525.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0621_2021",
+      "arquivo": "ses_ramo0621_2021_20261120T182329.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 60,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1128167458.0,
+          "oficial": 1128167458.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 619511899.0,
+          "oficial": 619511900.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 374208915.0,
+          "oficial": 374208916.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 253775559.0,
+          "oficial": 253775559.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 221543105.0,
+          "oficial": 221543106.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0621_2022",
+      "arquivo": "ses_ramo0621_2022_20261120T182337.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 58,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1397406635.0,
+          "oficial": 1397406634.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 792779032.0,
+          "oficial": 792779032.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 455620913.0,
+          "oficial": 455620910.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 281779047.0,
+          "oficial": 281779044.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 256799632.0,
+          "oficial": 256799630.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0621_2023",
+      "arquivo": "ses_ramo0621_2023_20261120T182346.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 53,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1401294305.0,
+          "oficial": 1401294304.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 735189875.0,
+          "oficial": 735189874.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 507783794.0,
+          "oficial": 507783794.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 290802375.0,
+          "oficial": 290802375.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 269240166.0,
+          "oficial": 269240167.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0621_2024",
+      "arquivo": "ses_ramo0621_2024_20261120T182354.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 55,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1405033433.0,
+          "oficial": 1405033432.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 662996652.0,
+          "oficial": 662996650.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 535895799.0,
+          "oficial": 535895798.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 288383528.0,
+          "oficial": 288383528.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 267869068.0,
+          "oficial": 267869068.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0621_2025",
+      "arquivo": "ses_ramo0621_2025_20261120T182403.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 57,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1484332875.0,
+          "oficial": 1484332873.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 806786084.0,
+          "oficial": 806786083.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 562097313.0,
+          "oficial": 562097314.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 388114562.0,
+          "oficial": 388114564.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 281687939.0,
+          "oficial": 281687939.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0622_2020",
+      "arquivo": "ses_ramo0622_2020_20261120T182411.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 62,
+      "totais": {
+        "premio_ganho": {
+          "soma": 614729054.0,
+          "oficial": 614729054.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 384182762.0,
+          "oficial": 384182760.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 223182154.0,
+          "oficial": 223182155.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 292168682.0,
+          "oficial": 292168681.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 126490468.0,
+          "oficial": 126490468.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0622_2021",
+      "arquivo": "ses_ramo0622_2021_20261120T182420.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 60,
+      "totais": {
+        "premio_ganho": {
+          "soma": 806721436.0,
+          "oficial": 806721438.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 151825538.0,
+          "oficial": 151825540.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 264672818.0,
+          "oficial": 264672815.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": -1113738.0,
+          "oficial": -1113740.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 165186414.0,
+          "oficial": 165186414.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0622_2022",
+      "arquivo": "ses_ramo0622_2022_20261120T182428.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 58,
+      "totais": {
+        "premio_ganho": {
+          "soma": 990197626.0,
+          "oficial": 990197626.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 352803681.0,
+          "oficial": 352803682.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 327787920.0,
+          "oficial": 327787920.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 157594500.0,
+          "oficial": 157594496.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 199339236.0,
+          "oficial": 199339235.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0622_2023",
+      "arquivo": "ses_ramo0622_2023_20261120T182436.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 52,
+      "totais": {
+        "premio_ganho": {
+          "soma": 889861134.0,
+          "oficial": 889861132.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 210084378.0,
+          "oficial": 210084375.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 337949327.0,
+          "oficial": 337949327.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 109328867.0,
+          "oficial": 109328866.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 206586100.0,
+          "oficial": 206586099.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0622_2024",
+      "arquivo": "ses_ramo0622_2024_20261120T182445.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 54,
+      "totais": {
+        "premio_ganho": {
+          "soma": 912773132.0,
+          "oficial": 912773131.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 235626494.0,
+          "oficial": 235626495.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 329198563.0,
+          "oficial": 329198562.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 71907917.0,
+          "oficial": 71907915.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 207092666.0,
+          "oficial": 207092666.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0622_2025",
+      "arquivo": "ses_ramo0622_2025_20261120T182453.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 56,
+      "totais": {
+        "premio_ganho": {
+          "soma": 948733224.0,
+          "oficial": 948733223.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 449425902.0,
+          "oficial": 449425899.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 316117207.0,
+          "oficial": 316117205.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 182971555.0,
+          "oficial": 182971556.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 230538718.0,
+          "oficial": 230538715.0,
+          "dif": 3.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0632_2020",
+      "arquivo": "ses_ramo0632_2020_20261120T182502.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 44,
+      "totais": {
+        "premio_ganho": {
+          "soma": 47484952.0,
+          "oficial": 47484951.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 30247384.0,
+          "oficial": 30247383.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 8075936.0,
+          "oficial": 8075936.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 6683013.0,
+          "oficial": 6683013.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 9370278.0,
+          "oficial": 9370278.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0632_2021",
+      "arquivo": "ses_ramo0632_2021_20261120T182510.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 43,
+      "totais": {
+        "premio_ganho": {
+          "soma": 70529531.0,
+          "oficial": 70529531.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 32205628.0,
+          "oficial": 32205627.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 10552864.0,
+          "oficial": 10552864.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 3493158.0,
+          "oficial": 3493159.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 15869658.0,
+          "oficial": 15869658.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0632_2022",
+      "arquivo": "ses_ramo0632_2022_20261120T182519.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 42,
+      "totais": {
+        "premio_ganho": {
+          "soma": 81988122.0,
+          "oficial": 81988121.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 43267253.0,
+          "oficial": 43267252.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 13896703.0,
+          "oficial": 13896701.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 10772775.0,
+          "oficial": 10772775.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 18514168.0,
+          "oficial": 18514169.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0632_2023",
+      "arquivo": "ses_ramo0632_2023_20261120T182527.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 39,
+      "totais": {
+        "premio_ganho": {
+          "soma": 80162354.0,
+          "oficial": 80162356.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 50119716.0,
+          "oficial": 50119716.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 17425384.0,
+          "oficial": 17425385.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 11051597.0,
+          "oficial": 11051598.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 18001250.0,
+          "oficial": 18001251.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0632_2024",
+      "arquivo": "ses_ramo0632_2024_20261120T182535.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 40,
+      "totais": {
+        "premio_ganho": {
+          "soma": 86348597.0,
+          "oficial": 86348599.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 45819704.0,
+          "oficial": 45819706.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 14747929.0,
+          "oficial": 14747928.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 7389727.0,
+          "oficial": 7389727.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 19859178.0,
+          "oficial": 19859179.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0632_2025",
+      "arquivo": "ses_ramo0632_2025_20261120T182543.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 43,
+      "totais": {
+        "premio_ganho": {
+          "soma": 96383073.0,
+          "oficial": 96383075.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 65232111.0,
+          "oficial": 65232111.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 19988992.0,
+          "oficial": 19988991.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 16087936.0,
+          "oficial": 16087936.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 21838993.0,
+          "oficial": 21838992.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0644_2020",
+      "arquivo": "ses_ramo0644_2020_20261120T182552.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 25,
+      "totais": {
+        "premio_ganho": {
+          "soma": 21472036.0,
+          "oficial": 21472035.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 6767292.0,
+          "oficial": 6767292.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1827651.0,
+          "oficial": 1827651.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 203959.0,
+          "oficial": 203959.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 3629946.0,
+          "oficial": 3629946.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0644_2021",
+      "arquivo": "ses_ramo0644_2021_20261120T182600.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 25,
+      "totais": {
+        "premio_ganho": {
+          "soma": 27038274.0,
+          "oficial": 27038274.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 7019363.0,
+          "oficial": 7019364.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 2715991.0,
+          "oficial": 2715991.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 552214.0,
+          "oficial": 552213.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 4428044.0,
+          "oficial": 4428043.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0644_2022",
+      "arquivo": "ses_ramo0644_2022_20261120T182608.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 23,
+      "totais": {
+        "premio_ganho": {
+          "soma": 32782341.0,
+          "oficial": 32782342.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 6100018.0,
+          "oficial": 6100017.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 904696.0,
+          "oficial": 904696.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": -214458.0,
+          "oficial": -214458.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 5290414.0,
+          "oficial": 5290413.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0644_2023",
+      "arquivo": "ses_ramo0644_2023_20261120T182617.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 21,
+      "totais": {
+        "premio_ganho": {
+          "soma": 33188353.0,
+          "oficial": 33188352.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 5924854.0,
+          "oficial": 5924853.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 907420.0,
+          "oficial": 907421.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 175470.0,
+          "oficial": 175471.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 4871168.0,
+          "oficial": 4871168.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0644_2024",
+      "arquivo": "ses_ramo0644_2024_20261120T182625.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 22,
+      "totais": {
+        "premio_ganho": {
+          "soma": 28659541.0,
+          "oficial": 28659541.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 7033066.0,
+          "oficial": 7033066.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 714266.0,
+          "oficial": 714266.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": -6279.0,
+          "oficial": -6279.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 4659725.0,
+          "oficial": 4659725.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0644_2025",
+      "arquivo": "ses_ramo0644_2025_20261120T182634.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 24,
+      "totais": {
+        "premio_ganho": {
+          "soma": 30069612.0,
+          "oficial": 30069613.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 15085396.0,
+          "oficial": 15085395.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1892486.0,
+          "oficial": 1892487.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": -2762.0,
+          "oficial": -2762.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 6948676.0,
+          "oficial": 6948676.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0645_2020",
+      "arquivo": "ses_ramo0645_2020_20261120T185618.html",
+      "fonte": "vazio",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 0,
+      "totais": {},
+      "rodape_ok": true
+    },
+    {
+      "chave": "0645_2021",
+      "arquivo": "ses_ramo0645_2021_20261120T185626.html",
+      "fonte": "vazio",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 0,
+      "totais": {},
+      "rodape_ok": true
+    },
+    {
+      "chave": "0645_2022",
+      "arquivo": "ses_ramo0645_2022_20261120T185635.html",
+      "fonte": "vazio",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 0,
+      "totais": {},
+      "rodape_ok": true
+    },
+    {
+      "chave": "0645_2023",
+      "arquivo": "ses_ramo0645_2023_20261120T185643.html",
+      "fonte": "vazio",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 0,
+      "totais": {},
+      "rodape_ok": true
+    },
+    {
+      "chave": "0645_2024",
+      "arquivo": "ses_ramo0645_2024_20261120T185651.html",
+      "fonte": "vazio",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 0,
+      "totais": {},
+      "rodape_ok": true
+    },
+    {
+      "chave": "0645_2025",
+      "arquivo": "ses_ramo0645_2025_20261120T183408.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 6,
+      "totais": {
+        "premio_ganho": {
+          "soma": 0.0,
+          "oficial": 0.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 0.0,
+          "oficial": 0.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 0.0,
+          "oficial": 0.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 0.0,
+          "oficial": 0.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 0.0,
+          "oficial": 0.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0652_2020",
+      "arquivo": "ses_ramo0652_2020_20261120T183416.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 45,
+      "totais": {
+        "premio_ganho": {
+          "soma": 15038951.0,
+          "oficial": 15038952.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 3074937.0,
+          "oficial": 3074936.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 4800962.0,
+          "oficial": 4800963.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 691108.0,
+          "oficial": 691108.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 3718688.0,
+          "oficial": 3718689.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0652_2021",
+      "arquivo": "ses_ramo0652_2021_20261120T183425.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 44,
+      "totais": {
+        "premio_ganho": {
+          "soma": 22422316.0,
+          "oficial": 22422316.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 2658327.0,
+          "oficial": 2658328.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 4038159.0,
+          "oficial": 4038159.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 595035.0,
+          "oficial": 595035.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 4593429.0,
+          "oficial": 4593429.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0652_2022",
+      "arquivo": "ses_ramo0652_2022_20261120T183433.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 42,
+      "totais": {
+        "premio_ganho": {
+          "soma": 26756991.0,
+          "oficial": 26756991.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 6788363.0,
+          "oficial": 6788363.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 7589809.0,
+          "oficial": 7589807.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 1376973.0,
+          "oficial": 1376973.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 5162952.0,
+          "oficial": 5162950.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0652_2023",
+      "arquivo": "ses_ramo0652_2023_20261120T183441.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 39,
+      "totais": {
+        "premio_ganho": {
+          "soma": 26629875.0,
+          "oficial": 26629874.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 6020626.0,
+          "oficial": 6020627.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 7813590.0,
+          "oficial": 7813591.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 1614219.0,
+          "oficial": 1614219.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 6524730.0,
+          "oficial": 6524729.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0652_2024",
+      "arquivo": "ses_ramo0652_2024_20261120T183450.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 40,
+      "totais": {
+        "premio_ganho": {
+          "soma": 24416871.0,
+          "oficial": 24416870.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 10811463.0,
+          "oficial": 10811464.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 6278653.0,
+          "oficial": 6278653.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 2397108.0,
+          "oficial": 2397110.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 6158393.0,
+          "oficial": 6158394.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0652_2025",
+      "arquivo": "ses_ramo0652_2025_20261120T183459.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 43,
+      "totais": {
+        "premio_ganho": {
+          "soma": 24419211.0,
+          "oficial": 24419210.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 14006824.0,
+          "oficial": 14006824.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 5435265.0,
+          "oficial": 5435264.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 5700227.0,
+          "oficial": 5700227.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 6789947.0,
+          "oficial": 6789948.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0654_2020",
+      "arquivo": "ses_ramo0654_2020_20261120T183507.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 54,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1099614772.0,
+          "oficial": 1099614770.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 605943050.0,
+          "oficial": 605943047.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 182879985.0,
+          "oficial": 182879984.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 99574952.0,
+          "oficial": 99574954.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 266851082.0,
+          "oficial": 266851078.0,
+          "dif": 4.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0654_2021",
+      "arquivo": "ses_ramo0654_2021_20261120T183515.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 52,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1407770959.0,
+          "oficial": 1407770962.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 846291981.0,
+          "oficial": 846291979.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 232097361.0,
+          "oficial": 232097360.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 157707829.0,
+          "oficial": 157707828.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 307395595.0,
+          "oficial": 307395596.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0654_2022",
+      "arquivo": "ses_ramo0654_2022_20261120T183524.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 50,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1630941414.0,
+          "oficial": 1630941414.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1034916975.0,
+          "oficial": 1034916973.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 221639960.0,
+          "oficial": 221639957.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 167622745.0,
+          "oficial": 167622744.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 375143174.0,
+          "oficial": 375143178.0,
+          "dif": 4.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0654_2023",
+      "arquivo": "ses_ramo0654_2023_20261120T183532.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 47,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1705686617.0,
+          "oficial": 1705686618.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1089204412.0,
+          "oficial": 1089204413.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 284635162.0,
+          "oficial": 284635163.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 207553120.0,
+          "oficial": 207553119.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 408757886.0,
+          "oficial": 408757888.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0654_2024",
+      "arquivo": "ses_ramo0654_2024_20261120T183540.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 48,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1733437090.0,
+          "oficial": 1733437092.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1249191441.0,
+          "oficial": 1249191443.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 233426444.0,
+          "oficial": 233426446.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 173325036.0,
+          "oficial": 173325036.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 428419013.0,
+          "oficial": 428419014.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0654_2025",
+      "arquivo": "ses_ramo0654_2025_20261120T183548.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 51,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1775629951.0,
+          "oficial": 1775629952.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1307789109.0,
+          "oficial": 1307789107.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 277347037.0,
+          "oficial": 277347036.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 212770366.0,
+          "oficial": 212770366.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 449432484.0,
+          "oficial": 449432483.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0655_2020",
+      "arquivo": "ses_ramo0655_2020_20261120T183557.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 48,
+      "totais": {
+        "premio_ganho": {
+          "soma": 614736368.0,
+          "oficial": 614736368.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 288007580.0,
+          "oficial": 288007580.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 101658182.0,
+          "oficial": 101658183.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 47027781.0,
+          "oficial": 47027781.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 145432512.0,
+          "oficial": 145432512.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0655_2021",
+      "arquivo": "ses_ramo0655_2021_20261120T183605.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 46,
+      "totais": {
+        "premio_ganho": {
+          "soma": 809316592.0,
+          "oficial": 809316591.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 485625103.0,
+          "oficial": 485625099.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 129989414.0,
+          "oficial": 129989413.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 62525171.0,
+          "oficial": 62525172.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 190846669.0,
+          "oficial": 190846669.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0655_2022",
+      "arquivo": "ses_ramo0655_2022_20261120T183613.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 45,
+      "totais": {
+        "premio_ganho": {
+          "soma": 964068034.0,
+          "oficial": 964068035.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 629168528.0,
+          "oficial": 629168531.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 126935548.0,
+          "oficial": 126935547.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 97419312.0,
+          "oficial": 97419314.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 220455289.0,
+          "oficial": 220455288.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0655_2023",
+      "arquivo": "ses_ramo0655_2023_20261120T183622.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 42,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1046401273.0,
+          "oficial": 1046401275.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 477248972.0,
+          "oficial": 477248972.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 164432197.0,
+          "oficial": 164432196.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 75317480.0,
+          "oficial": 75317483.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 246837620.0,
+          "oficial": 246837619.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0655_2024",
+      "arquivo": "ses_ramo0655_2024_20261120T183630.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 43,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1318146101.0,
+          "oficial": 1318146103.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 528906555.0,
+          "oficial": 528906554.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 169462337.0,
+          "oficial": 169462337.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 75365520.0,
+          "oficial": 75365520.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 322539097.0,
+          "oficial": 322539097.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0655_2025",
+      "arquivo": "ses_ramo0655_2025_20261120T183639.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 46,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1404417807.0,
+          "oficial": 1404417807.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 531493075.0,
+          "oficial": 531493076.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 213752272.0,
+          "oficial": 213752273.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 105361464.0,
+          "oficial": 105361463.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 354832624.0,
+          "oficial": 354832627.0,
+          "dif": 3.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0656_2020",
+      "arquivo": "ses_ramo0656_2020_20261120T183647.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 43,
+      "totais": {
+        "premio_ganho": {
+          "soma": 11933767.0,
+          "oficial": 11933767.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 3450955.0,
+          "oficial": 3450953.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 3195369.0,
+          "oficial": 3195369.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 1214017.0,
+          "oficial": 1214016.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 3059347.0,
+          "oficial": 3059348.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0656_2021",
+      "arquivo": "ses_ramo0656_2021_20261120T183655.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 42,
+      "totais": {
+        "premio_ganho": {
+          "soma": 15296994.0,
+          "oficial": 15296996.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 1154198.0,
+          "oficial": 1154199.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 2856465.0,
+          "oficial": 2856464.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 31479.0,
+          "oficial": 31481.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 3999272.0,
+          "oficial": 3999273.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0656_2022",
+      "arquivo": "ses_ramo0656_2022_20261120T183704.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 42,
+      "totais": {
+        "premio_ganho": {
+          "soma": 17982107.0,
+          "oficial": 17982108.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 3208464.0,
+          "oficial": 3208464.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 4475213.0,
+          "oficial": 4475214.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 483971.0,
+          "oficial": 483970.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 4648851.0,
+          "oficial": 4648851.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0656_2023",
+      "arquivo": "ses_ramo0656_2023_20261120T183712.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 39,
+      "totais": {
+        "premio_ganho": {
+          "soma": 26631184.0,
+          "oficial": 26631184.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 31559990.0,
+          "oficial": 31559989.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 7222226.0,
+          "oficial": 7222228.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 26176515.0,
+          "oficial": 26176515.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 6961402.0,
+          "oficial": 6961404.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0656_2024",
+      "arquivo": "ses_ramo0656_2024_20261120T183720.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 40,
+      "totais": {
+        "premio_ganho": {
+          "soma": 51440207.0,
+          "oficial": 51440208.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 19224666.0,
+          "oficial": 19224665.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 7752488.0,
+          "oficial": 7752488.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 4952484.0,
+          "oficial": 4952484.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 15967793.0,
+          "oficial": 15967793.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0656_2025",
+      "arquivo": "ses_ramo0656_2025_20261120T183729.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 43,
+      "totais": {
+        "premio_ganho": {
+          "soma": 42996938.0,
+          "oficial": 42996940.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 23588141.0,
+          "oficial": 23588140.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 8350699.0,
+          "oficial": 8350698.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 15253163.0,
+          "oficial": 15253163.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 13359879.0,
+          "oficial": 13359879.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0775_2020",
+      "arquivo": "ses_ramo0775_2020_20261120T183737.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 57,
+      "totais": {
+        "premio_ganho": {
+          "soma": 2300376284.0,
+          "oficial": 2300376280.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 391367165.0,
+          "oficial": 391367164.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1112220313.0,
+          "oficial": 1112220312.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 311500546.0,
+          "oficial": 311500543.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 455705006.0,
+          "oficial": 455705006.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0775_2021",
+      "arquivo": "ses_ramo0775_2021_20261120T183746.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 57,
+      "totais": {
+        "premio_ganho": {
+          "soma": 2436448639.0,
+          "oficial": 2436448640.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 41523527.0,
+          "oficial": 41523530.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1142020745.0,
+          "oficial": 1142020747.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": -129776683.0,
+          "oficial": -129776682.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 504037797.0,
+          "oficial": 504037796.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0775_2022",
+      "arquivo": "ses_ramo0775_2022_20261120T183754.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 56,
+      "totais": {
+        "premio_ganho": {
+          "soma": 2645729598.0,
+          "oficial": 2645729593.0,
+          "dif": 5.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 330340032.0,
+          "oficial": 330340033.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1257394031.0,
+          "oficial": 1257394031.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 403058735.0,
+          "oficial": 403058735.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 561015536.0,
+          "oficial": 561015538.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0775_2023",
+      "arquivo": "ses_ramo0775_2023_20261120T183803.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 56,
+      "totais": {
+        "premio_ganho": {
+          "soma": 2858822792.0,
+          "oficial": 2858822793.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 379669885.0,
+          "oficial": 379669884.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1373055310.0,
+          "oficial": 1373055309.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 282726400.0,
+          "oficial": 282726398.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 638842640.0,
+          "oficial": 638842641.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0775_2024",
+      "arquivo": "ses_ramo0775_2024_20261120T183811.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 61,
+      "totais": {
+        "premio_ganho": {
+          "soma": 3153740233.0,
+          "oficial": 3153740233.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 228432524.0,
+          "oficial": 228432523.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1508058403.0,
+          "oficial": 1508058402.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 143344297.0,
+          "oficial": 143344302.0,
+          "dif": 5.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 728544212.0,
+          "oficial": 728544210.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0775_2025",
+      "arquivo": "ses_ramo0775_2025_20261120T183819.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 66,
+      "totais": {
+        "premio_ganho": {
+          "soma": 3558138984.0,
+          "oficial": 3558138983.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 277557956.0,
+          "oficial": 277557954.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 1691651936.0,
+          "oficial": 1691651935.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 175678530.0,
+          "oficial": 175678530.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 849592175.0,
+          "oficial": 849592178.0,
+          "dif": 3.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0776_2020",
+      "arquivo": "ses_ramo0776_2020_20261120T183828.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 54,
+      "totais": {
+        "premio_ganho": {
+          "soma": 256496822.0,
+          "oficial": 256496824.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 112889209.0,
+          "oficial": 112889210.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 110137969.0,
+          "oficial": 110137970.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 107968549.0,
+          "oficial": 107968548.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 53358218.0,
+          "oficial": 53358217.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0776_2021",
+      "arquivo": "ses_ramo0776_2021_20261120T183836.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 54,
+      "totais": {
+        "premio_ganho": {
+          "soma": 338129124.0,
+          "oficial": 338129124.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 168074746.0,
+          "oficial": 168074744.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 151597973.0,
+          "oficial": 151597972.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 151297416.0,
+          "oficial": 151297416.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 72542063.0,
+          "oficial": 72542063.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0776_2022",
+      "arquivo": "ses_ramo0776_2022_20261120T183844.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 54,
+      "totais": {
+        "premio_ganho": {
+          "soma": 456145712.0,
+          "oficial": 456145715.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 355148451.0,
+          "oficial": 355148451.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 230274512.0,
+          "oficial": 230274510.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 315891760.0,
+          "oficial": 315891759.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 105103872.0,
+          "oficial": 105103874.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0776_2023",
+      "arquivo": "ses_ramo0776_2023_20261120T183853.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 54,
+      "totais": {
+        "premio_ganho": {
+          "soma": 609197054.0,
+          "oficial": 609197054.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 671020631.0,
+          "oficial": 671020629.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 279750302.0,
+          "oficial": 279750301.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 637220605.0,
+          "oficial": 637220605.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 141381168.0,
+          "oficial": 141381167.0,
+          "dif": 1.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0776_2024",
+      "arquivo": "ses_ramo0776_2024_20261120T183901.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 59,
+      "totais": {
+        "premio_ganho": {
+          "soma": 649810520.0,
+          "oficial": 649810518.0,
+          "dif": 2.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 345532378.0,
+          "oficial": 345532375.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 307660898.0,
+          "oficial": 307660902.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 265201274.0,
+          "oficial": 265201274.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 157077140.0,
+          "oficial": 157077140.0,
+          "dif": 0.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    },
+    {
+      "chave": "0776_2025",
+      "arquivo": "ses_ramo0776_2025_20261120T183910.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 64,
+      "totais": {
+        "premio_ganho": {
+          "soma": 733978655.0,
+          "oficial": 733978652.0,
+          "dif": 3.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 625623963.0,
+          "oficial": 625623967.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 338096312.0,
+          "oficial": 338096313.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 549136293.0,
+          "oficial": 549136293.0,
+          "dif": 0.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 176014203.0,
+          "oficial": 176014205.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    }
+  ]
+}

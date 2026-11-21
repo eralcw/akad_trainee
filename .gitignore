@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/raw/*.tmp
+data/snapshots/.staging_*
+# legado (scripts antigos ses_coleta.py / ses_trata.py)
+automacao/raw/
+automacao/processed/

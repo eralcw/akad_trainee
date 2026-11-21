@@ -1,0 +1,15 @@
+{
+  "run_id": "20261120T181552",
+  "comando": "coletar",
+  "inicio": "2026-11-20T18:15:22",
+  "coleta": {
+    "coletadas": [
+      "0351_2025"
+    ],
+    "puladas": [],
+    "falhas": [],
+    "erros": {}
+  },
+  "fim": "2026-11-20T18:15:52",
+  "sucesso": true
+}
