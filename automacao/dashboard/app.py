@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
-from . import atualizar, dados, github_api
+from . import atualizar, dados, github_api, painel
 from .estilo import CSS
 
 REPO_URL = "https://github.com/eralcw/akad_trainee"
+LOGO = Path(__file__).resolve().parent / "assets" / "akad_logo.png"
 
 
 def _segredo():
@@ -31,9 +34,9 @@ def _header() -> None:
           <div class="kicker">Akad Seguros · base SES/SUSEP · 2020–2025</div>
           <h1>Operação da base</h1>
           <p class="standfirst">
-            Atualize o snapshot anual ou acompanhe um recorte parcial de trimestre/mês.
-            A coleta roda no GitHub Actions: aqui você escolhe o recorte, dispara o workflow
-            e vê o resultado publicado, sem abrir o navegador do Playwright na sua máquina.
+            Leia o mercado, a rentabilidade e a posição da Akad nas cinco LOBs. Quando precisar,
+            atualize o snapshot anual ou acompanhe um recorte parcial. A coleta roda no GitHub
+            Actions; aqui você escolhe o recorte, dispara o workflow e vê o resultado publicado.
           </p>
         </div>
         """,
@@ -161,6 +164,7 @@ def _metodo_tab() -> None:
     )
     st.link_button("Abrir o workflow no GitHub", f"{REPO_URL}/blob/main/.github/workflows/update.yml")
     st.link_button("Abrir o EDA", f"{REPO_URL}/blob/main/analise/eda.html")
+    st.link_button("Abrir o roteiro de apresentação", f"{REPO_URL}/blob/main/analise/roteiro_apresentacao.md")
 
 
 def main() -> None:
@@ -170,12 +174,20 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(f"<style>{CSS}</style>", unsafe_allow_html=True)
+    if LOGO.exists():
+        try:
+            st.logo(str(LOGO), size="large", link=REPO_URL)
+        except Exception:
+            with st.sidebar:
+                st.image(str(LOGO), use_container_width=True)
     s = dados.status_geral()
     _header()
     _sidebar(s)
-    tab_atualizar, tab_status, tab_metodo = st.tabs(
-        ["Atualizar base", "Status", "Método"]
+    tab_painel, tab_atualizar, tab_status, tab_metodo = st.tabs(
+        ["Painel", "Atualizar base", "Status", "Método"]
     )
+    with tab_painel:
+        painel.render()
     with tab_atualizar:
         atualizar.render()
     with tab_status:

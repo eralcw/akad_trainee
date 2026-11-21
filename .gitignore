@@ -12,3 +12,6 @@ automacao/processed/
 .streamlit/secrets.toml
 data/atualizacoes/.staging_*
 data/raw/periodos/*.tmp
+
+# roteiro pessoal de apresentacao (gerado; nao versionar)
+analise/roteiro_apresentacao.html

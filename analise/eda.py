@@ -25,6 +25,7 @@ Regras de metodo:
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import json
 import math
@@ -38,25 +39,25 @@ ROOT = Path(__file__).resolve().parent.parent
 SNAP_DIR = ROOT / "data" / "snapshots"
 RAW_DIR = ROOT / "data" / "raw"
 
-INK = "#12201D"
-MUTED = "#5C6B66"
-RULE = "#CBD6D1"
-BG = "#EDF1EF"
-PINE = "#17453C"
-SIGNAL = "#C8451F"
-STEEL = "#3D6E8C"
-MOSS = "#6E8B3D"
-COPPER = "#B4723A"
-PLUM = "#7D5A8C"
-NEUTRAL = "#98A6A1"
+INK = "#143057"
+MUTED = "#5B6485"
+RULE = "#E4E6F4"
+BG = "#FFFFFF"
+PINE = "#E9256A"
+SIGNAL = "#6B72D8"
+STEEL = "#143057"
+MOSS = "#6B72D8"
+COPPER = "#F7A3BF"
+PLUM = "#8C4A6B"
+NEUTRAL = "#9AA0B5"
 
 LOB_ORDEM = ["Transportes", "Empresarial", "Garantia", "RCG", "E&O"]
 LOB_COR = {
     "Transportes": COPPER,
     "Empresarial": MOSS,
     "Garantia": PLUM,
-    "RCG": PINE,
-    "E&O": STEEL,
+    "RCG": STEEL,
+    "E&O": PINE,
 }
 VALORES = [
     "premio_ganho",
@@ -460,7 +461,7 @@ def hbar_svg(items, *, width=860, label_w=180, value_w=110, bar_h=26, gap=14, fm
         y = top + i * (bar_h + gap)
         w = max(0.0, min(1.0, valor / maxv)) * largura
         parts.append(f'<text x="{x0-12}" y="{y+bar_h*0.7:.1f}" text-anchor="end" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="{INK}">{esc(rotulo)}</text>')
-        parts.append(f'<rect x="{x0}" y="{y}" width="{largura}" height="{bar_h}" fill="#E1E8E4"/>')
+        parts.append(f'<rect x="{x0}" y="{y}" width="{largura}" height="{bar_h}" fill="#F4F5FD"/>')
         parts.append(f'<rect x="{x0}" y="{y}" width="{w:.1f}" height="{bar_h}" fill="{cor}"><title>{esc(rotulo)}: {esc(fmt(valor))}</title></rect>')
         partes_valor = fmt(valor)
         tx = min(x0 + w + 8, width - 4)
@@ -520,12 +521,12 @@ def heatmap_html(linhas, colunas, matriz, fmt=f_pct):
                 out.append('<td class="vazio">–</td>')
                 continue
             t = 0.5 if hi == lo else max(0.0, min(1.0, (v - lo) / (hi - lo)))
-            cor = _interp("#E7EEEA", "#7FA69C", t * 2) if t < 0.5 else _interp("#7FA69C", SIGNAL, (t - 0.5) * 2)
+            cor = _interp("#F4F5FD", "#F7A3BF", t * 2) if t < 0.5 else _interp("#F7A3BF", PINE, (t - 0.5) * 2)
             tinta = "#FFFFFF" if _luz(cor) < 0.52 else INK
             out.append(f'<td style="background:{cor};color:{tinta}">{esc(fmt(v))}</td>')
         out.append("</tr>")
     out.append("</tbody></table>")
-    return "".join(out)
+    return '<div class="tablewrap">' + "".join(out) + "</div>"
 
 
 def tabela(headers, rows, *, num=None, classe=""):
@@ -538,7 +539,7 @@ def tabela(headers, rows, *, num=None, classe=""):
     for row in rows:
         out.append("<tr>" + "".join(f'<td class="{"num" if i in num else ""}">{c}</td>' for i, c in enumerate(row)) + "</tr>")
     out.append("</tbody></table>")
-    return "".join(out)
+    return '<div class="tablewrap">' + "".join(out) + "</div>"
 
 
 # --------------------------------------------------------------------------
@@ -548,6 +549,11 @@ def tabela(headers, rows, *, num=None, classe=""):
 def gerar(saida: Path, snapshot: str | None = None) -> Path:
     base, meta, snap = carregar(snapshot)
     man = ler_manifesto()
+    logo_path = ROOT / "automacao" / "dashboard" / "assets" / "akad_logo.png"
+    logo_html = ""
+    if logo_path.exists():
+        b64 = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+        logo_html = f'<img class="logo" src="data:image/png;base64,{b64}" alt="Akad Seguros">' 
     zerada, ativa = mascaras(base)
     vis = base[base["premio_ganho"] > 0]
     lob = por_lob(base)
@@ -885,6 +891,21 @@ def gerar(saida: Path, snapshot: str | None = None) -> Path:
     akad_tr = akad[akad.lob == "Transportes"].iloc[0]
     akad_rcg = akad[akad.lob == "RCG"].iloc[0]
 
+    fase = base[base["ano"] >= 2022]
+    fase_anos = sorted(fase["ano"].unique()) if not fase.empty else []
+    f0, f1 = (int(fase_anos[0]), int(fase_anos[-1])) if fase_anos else (None, None)
+
+    def _share_fase(lob_nome: str, ano: int) -> float:
+        g = base[(base["lob"] == lob_nome) & (base["ano"] == ano)]
+        total = float(g["premio_ganho"].sum())
+        ak = float(g.loc[g["codigo_susep"] == AKAD, "premio_ganho"].sum())
+        return ak / total if total > 0 else 0.0
+
+    fase_shares = {
+        l: (_share_fase(l, f0), _share_fase(l, f1)) if f0 is not None else (0.0, 0.0)
+        for l in LOB_ORDEM
+    }
+
     if q2_20 == q2_25:
         frase_q2_resp = (
             f"Com prêmio > 0, {q2_20} lidera os dois anos "
@@ -914,13 +935,14 @@ def gerar(saida: Path, snapshot: str | None = None) -> Path:
     # HTML
     css = """
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
-    :root{--ink:#12201D;--muted:#5C6B66;--rule:#CBD6D1;--bg:#EDF1EF;--pine:#17453C;--signal:#C8451F;}
+    :root{--ink:#143057;--muted:#5B6485;--rule:#E4E6F4;--bg:#FFFFFF;--pine:#E9256A;--signal:#6B72D8;}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans','Segoe UI',sans-serif;font-size:15px;line-height:1.6}
     .wrap{max-width:1080px;margin:0 auto;padding:56px 32px 96px}
+    .logo{height:40px;width:auto;display:block;margin-bottom:16px}
     .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.02em;margin-bottom:18px}
     h1{font-size:44px;line-height:1.08;letter-spacing:-.025em;font-weight:600;max-width:820px;margin:0 0 18px}
-    .standfirst{font-size:18px;line-height:1.5;color:#33443F;max-width:720px;margin:0 0 28px}
+    .standfirst{font-size:18px;line-height:1.5;color:#F7A3BF;max-width:720px;margin:0 0 28px}
     .fonte{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
     .ledger{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:34px 0 8px}
     .ledger div{padding:18px 18px 16px;border-left:1px solid var(--rule)}
@@ -935,24 +957,25 @@ def gerar(saida: Path, snapshot: str | None = None) -> Path:
     .secnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--signal);margin-bottom:8px}
     h2{font-size:27px;line-height:1.2;letter-spacing:-.02em;font-weight:600;margin:0 0 14px;max-width:760px}
     h3{font-size:17px;font-weight:600;margin:32px 0 10px}
-    p{max-width:74ch;margin:0 0 14px;color:#33443F}
-    code{font-family:'IBM Plex Mono',monospace;font-size:.9em;background:#E1E8E4;padding:1px 4px}
+    p{max-width:74ch;margin:0 0 14px;color:#F7A3BF}
+    code{font-family:'IBM Plex Mono',monospace;font-size:.9em;background:#F4F5FD;padding:1px 4px}
     table{width:100%;border-collapse:collapse;margin:14px 0 18px;font-size:13px}
+    .tablewrap{overflow-x:auto;max-width:100%}
     th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
     thead th{font-weight:500;color:var(--muted);font-size:11px;letter-spacing:.01em;border-bottom:1px solid var(--ink)}
     td.num,th.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:nowrap}
-    tbody tr:hover{background:#E6ECE8}
+    tbody tr:hover{background:#F4F5FD}
     .heat td{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--bg)}
     .heat th{font-size:11px;color:var(--muted);font-weight:500}
     .heat th.rowh{text-align:left;font-family:'IBM Plex Sans',sans-serif;color:var(--ink);font-size:12px}
-    .heat td.vazio{background:#E1E8E4;color:var(--muted)}
+    .heat td.vazio{background:#F4F5FD;color:var(--muted)}
     .chart{margin:18px 0 10px;overflow:hidden}
-    .nota{background:#E4EAE7;border-left:3px solid var(--pine);padding:14px 16px;margin:18px 0;max-width:820px}
-    .alerta{background:#F3E4DF;border-left:3px solid var(--signal);padding:14px 16px;margin:18px 0;max-width:820px}
+    .nota{background:#F4F5FD;border-left:3px solid var(--pine);padding:14px 16px;margin:18px 0;max-width:820px}
+    .alerta{background:#F4F5FD;border-left:3px solid var(--signal);padding:14px 16px;margin:18px 0;max-width:820px}
     .nota p,.alerta p{margin:0;font-size:14px}
     .duas{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
     ul{max-width:76ch;padding-left:20px;margin:0 0 16px}
-    li{margin-bottom:8px;color:#33443F}
+    li{margin-bottom:8px;color:#F7A3BF}
     .fim{margin-top:64px;border-top:1px solid var(--rule);padding-top:18px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
     @media(max-width:800px){h1{font-size:32px}.ledger{grid-template-columns:1fr 1fr}.ledger div{border-left:0;border-top:1px solid var(--rule);padding-left:0}.duas{grid-template-columns:1fr}table{font-size:12px}}
     """
@@ -962,6 +985,7 @@ def gerar(saida: Path, snapshot: str | None = None) -> Path:
 <title>EDA SES/SUSEP · Case Akad 2027</title>
 <style>{css}</style></head><body><div class="wrap">
 
+{logo_html}
 <div class="kicker">Akad Seguros · Programa de Trainee 2027 · análise exploratória</div>
 <h1>O mercado de seguros em cinco linhas de negócio, 2020–2025</h1>
 <p class="standfirst">Inventário da coleta, tratamento das tabelas do SES e as primeiras leituras de prêmio, sinistralidade e margem. Este documento é um EDA, não um dashboard: cada número vem do snapshot validado e cada decisão de tratamento está declarada.</p>
@@ -1088,6 +1112,7 @@ def gerar(saida: Path, snapshot: str | None = None) -> Path:
 <div class="secnum">09 · Akad</div>
 <h2>A Akad é forte em E&amp;O e escala em Transportes, mas a margem de Transportes preocupa</h2>
 <p>A Akad está nas cinco LOBs, mas com pesos muito diferentes. Em E&amp;O ela é a primeira do mercado desde 2022, com share de {f_pct(akad_eo['share1'])} em {anos[-1]}. Em Transportes ela é a terceira, com {f_pct(akad_tr['share1'])}, mas a margem caiu para 0,2% em 2025. Em RCG o share ainda é {f_pct(akad_rcg['share1'])}, porém a margem é alta e o mercado é volátil. Garantia e Empresarial são subescala.</p>
+<div class="nota"><p><strong>Leitura de marca.</strong> 2020–2021 é a operação Argo; a Akad nasce em 2022. A série de seis anos serve para tamanho e tendência, mas a posição atual deve ser lida de 2022 em diante. Na fase Akad ({f0}–{f1}), o share de E&amp;O foi de {f_pct(fase_shares['E&O'][0])} para {f_pct(fase_shares['E&O'][1])}; Transportes, de {f_pct(fase_shares['Transportes'][0])} para {f_pct(fase_shares['Transportes'][1])}; RCG, de {f_pct(fase_shares['RCG'][0])} para {f_pct(fase_shares['RCG'][1])}. O rebranding é um divisor estrutural: parte do movimento reflete a reconstrução da marca e da estratégia, não só crescimento orgânico.</p></div>
 {ak_tab}
 {('<div class="nota"><p>' + frase_base_emp + '</p></div>') if frase_base_emp else ''}
 <div class="chart">{ak_share}</div>
