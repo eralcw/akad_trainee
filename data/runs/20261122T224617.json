@@ -1,0 +1,27 @@
+{
+  "run_id": "20261122T224617",
+  "comando": "atualizar",
+  "inicio": "2026-11-22T22:46:16",
+  "coleta": {
+    "coletadas": [],
+    "puladas": [
+      "0621_2020"
+    ],
+    "falhas": [],
+    "erros": {}
+  },
+  "processamento": {
+    "aprovado": true,
+    "publicado": false,
+    "motivo": "base identica ao snapshot vigente",
+    "snapshot": "20261120T185656",
+    "diff": {
+      "linhas_alteradas": 0,
+      "linhas_novas": 0,
+      "linhas_removidas": 0,
+      "delta_premio_ganho_por_lob": {}
+    }
+  },
+  "fim": "2026-11-22T22:46:17",
+  "sucesso": true
+}
