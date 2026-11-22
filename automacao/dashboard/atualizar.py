@@ -163,11 +163,42 @@ def render() -> None:
             if mes_ini > mes_fim:
                 st.error("O mês inicial não pode ser maior que o final.")
 
-    forcar = st.checkbox("Re-extrair mesmo o que já existe", value=False)
+    forcar = st.checkbox(
+        "Baixar de novo mesmo o que já existe (cria um novo arquivo)", value=False
+    )
     periodo_txt = f"{ano}{mes_ini:02d}–{ano}{mes_fim:02d}"
     st.markdown(
         f"**{len(ramos)} consulta(s)** · ramos {', '.join(ramos) if ramos else '—'} · {periodo_txt}"
     )
+
+    # quantas dessas consultas ja existem no raw
+    novas = existentes = None
+    try:
+        from ses.extract import pendentes
+
+        if modo == "Ano fechado":
+            consultas = cfg.consultas_periodo(ano, 1, 12, ramos=ramos)
+            pasta = cfg.raw
+        else:
+            consultas = cfg.consultas_periodo(ano, mes_ini, mes_fim, ramos=ramos)
+            pasta = cfg.raw_periodos
+        a_coletar, ja_existem = pendentes(cfg, forcar=forcar, consultas=consultas, pasta=pasta)
+        novas, existentes = len(a_coletar), len(ja_existem)
+    except Exception as e:  # nao impede o disparo
+        st.caption(f"Não foi possível verificar o raw: {e}")
+
+    if novas is not None:
+        if forcar:
+            st.caption(f"**{novas} consulta(s) serão baixadas de novo** (novo arquivo para cada uma).")
+        elif existentes:
+            st.warning(
+                f"**{existentes} de {novas + existentes} consulta(s) já existem no raw.** "
+                "Elas serão puladas, então nenhum `.xls` novo aparecerá — só o registro do run. "
+                "Marque **Baixar de novo** para forçar o download."
+            )
+        else:
+            st.caption(f"**{novas} consulta(s) novas** serão baixadas.")
+
     if modo == "Ano fechado":
         st.caption("Ano fechado atualiza o snapshot anual. Reprocessar o raw refaz as 84 consultas.")
     else:
@@ -195,8 +226,9 @@ def render() -> None:
         try:
             github_api.disparar(repo, inputs)
             st.success(
-                "Workflow disparado. Acompanhe na aba Actions; quando terminar, "
-                "o resultado aparece em Status e em data/atualizacoes."
+                "Workflow disparado. Acompanhe em Execuções recentes ou na aba Actions. "
+                "Se as consultas já existiam no raw, o run apenas registra o diário (JSON); "
+                "para gerar um `.xls` novo, marque \"Baixar de novo\" e dispare outra vez."
             )
             st.session_state["ultimo_disparo"] = {
                 "modo": "coleta + atualização" if coletar else "reprocessar raw",
