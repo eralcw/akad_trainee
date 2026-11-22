@@ -31,7 +31,6 @@ def _header() -> None:
     st.markdown(
         """
         <div class="masthead">
-          <div class="kicker">Akad Seguros · base SES/SUSEP · 2020–2025</div>
           <h1>Operação da base</h1>
           <p class="standfirst">
             Leia o mercado, a rentabilidade e a posição da Akad nas cinco LOBs. Quando precisar,
@@ -47,29 +46,28 @@ def _header() -> None:
 def _sidebar(s: dict) -> None:
     repo = github_api.repo_de_secrets(_segredo()) if _segredo() is not None else None
     with st.sidebar:
-        st.markdown("### Snapshot anual")
-        st.markdown(f"`{s['snapshot'] or 'nenhum'}`")
-        st.caption(f"Criado em {_data(s['criado_em'])}")
+        st.markdown("### Base anual")
+        st.caption(f"Versão de {_data(s['criado_em'])}")
         st.markdown(
-            f"Cobertura raw **{s['cobertura_raw']}**  \n"
-            f"Cobertura snapshot **{s['cobertura_snapshot']}**  \n"
-            f"Totais SES **{s['totais']}**  \n"
-            f"Linhas **{s['linhas'] if s['linhas'] is not None else '—'}**"
+            f"Consultas baixadas **{s['cobertura_raw']}**  \n"
+            f"Consultas na base **{s['cobertura_snapshot']}**  \n"
+            f"Conferidas com a SUSEP **{s['totais']}**  \n"
+            f"Linhas na base **{s['linhas'] if s['linhas'] is not None else '—'}**"
         )
-        st.caption(f"Última coleta no raw: {_data(s['ultima_coleta'])}")
-        st.markdown("### Recortes parciais")
-        st.markdown(f"**{s['parciais']}** publicado(s) em `data/atualizacoes`")
+        st.caption(f"Última atualização dos dados: {_data(s['ultima_coleta'])}")
+        st.markdown("### Atualizações parciais")
+        st.markdown(f"**{s['parciais']}** recorte(s) salvo(s)")
         st.divider()
         if repo is not None:
-            st.link_button("Abrir GitHub Actions", github_api.url_actions(repo), use_container_width=True)
-            st.caption("GitHub conectado.")
+            st.link_button("Ver histórico de atualizações", github_api.url_actions(repo), use_container_width=True)
+            st.caption("Atualização automática conectada.")
         else:
-            st.caption("GitHub sem token configurado; a aba de atualização fica em leitura.")
-        st.link_button("Ver código no GitHub", REPO_URL, use_container_width=True)
+            st.caption("Atualização automática não configurada; o painel só mostra os dados.")
+        st.link_button("Ver projeto no GitHub", REPO_URL, use_container_width=True)
         st.divider()
         st.caption(
-            "O app não grava arquivos. O workflow baixa do SES, valida, comita o raw "
-            "e publica o snapshot. O app relê o que foi comitado."
+            "Este painel só mostra os dados. Quem baixa e confere as informações é o sistema "
+            "de atualização. Ele salva uma nova versão e o painel passa a exibir essa versão."
         )
 
 
@@ -77,12 +75,12 @@ def _status_tab(s: dict) -> None:
     st.subheader("Status da base")
     ledger = (
         '<div class="ledger">'
-        f'<div><span class="lab">Snapshot anual</span><span class="val">{s["snapshot"] or "—"}</span>'
-        f'<span class="nota">{_data(s["criado_em"])}</span></div>'
-        f'<div><span class="lab">Cobertura raw</span><span class="val">{s["cobertura_raw"]}</span>'
-        '<span class="nota">consultas do config</span></div>'
-        f'<div><span class="lab">Totais conferidos</span><span class="val">{s["totais"]}</span>'
-        '<span class="nota">contra a linha Totais do SES</span></div>'
+        f'<div><span class="lab">Base anual</span><span class="val">{s["snapshot"] or "—"}</span>'
+        f'<span class="nota">versão de {_data(s["criado_em"])}</span></div>'
+        f'<div><span class="lab">Consultas baixadas</span><span class="val">{s["cobertura_raw"]}</span>'
+        '<span class="nota">consultas previstas</span></div>'
+        f'<div><span class="lab">Conferidas com a SUSEP</span><span class="val">{s["totais"]}</span>'
+        '<span class="nota">contra os totais oficiais</span></div>'
         f'<div><span class="lab">Linhas na base</span><span class="val">{s["linhas"] if s["linhas"] is not None else "—"}</span>'
         f'<span class="nota">{s["parciais"]} recorte(s) parcial(is)</span></div>'
         "</div>"
@@ -118,8 +116,8 @@ def _status_tab(s: dict) -> None:
                 st.markdown(f"- {a}")
 
     st.caption(
-        "O recorte parcial fica separado do snapshot anual de propósito: um trimestre "
-        "não pode substituir o ano fechado."
+        "Cada recorte de trimestre ou mês fica separado da base anual: ele serve para "
+        "acompanhar o período, sem substituir o ano fechado."
     )
 
 
@@ -174,11 +172,7 @@ def main() -> None:
     )
     st.markdown(f"<style>{CSS}</style>", unsafe_allow_html=True)
     if LOGO.exists():
-        try:
-            st.logo(str(LOGO), size="large", link=REPO_URL)
-        except Exception:
-            with st.sidebar:
-                st.image(str(LOGO), use_container_width=True)
+        st.image(str(LOGO), width=180)
     s = dados.status_geral()
     _header()
     _sidebar(s)

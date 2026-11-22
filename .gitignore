@@ -13,5 +13,8 @@ automacao/processed/
 data/atualizacoes/.staging_*
 data/raw/periodos/*.tmp
 
+# pastas locais
+.claude/
+
 # analise pessoal (EDA, roteiros, geradores): manter apenas no disco
 analise/

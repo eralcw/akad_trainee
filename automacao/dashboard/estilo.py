@@ -7,7 +7,7 @@ CSS = """
   --navy:#143057; --surface:#F4F5FD; --charcoal:#3A4A6B;
 }
 .stApp{background:var(--bg);color:var(--ink);}
-.block-container{max-width:1120px;padding-top:2.2rem;padding-bottom:4rem;}
+.block-container{max-width:1120px;padding-top:4.2rem;padding-bottom:4rem;}
 [data-testid="stSidebar"]{background:var(--surface);border-right:1px solid var(--rule);}
 [data-testid="stSidebar"] .block-container{padding-top:1.4rem;}
 h1,h2,h3,h4{font-family:'IBM Plex Sans','Segoe UI',sans-serif;letter-spacing:-.02em;color:var(--navy);}
