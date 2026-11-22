@@ -38,6 +38,27 @@ def _segredo():
         return None
 
 
+def _senha_ok() -> bool:
+    """Protege a aba quando `[app] senha_atualizacao` existe nos secrets."""
+    try:
+        senha = str(st.secrets["app"]["senha_atualizacao"])
+    except Exception:
+        return True
+    if not senha:
+        return True
+    if st.session_state.get("upd_ok"):
+        return True
+    with st.form("upd_login"):
+        valor = st.text_input("Senha para atualizar a base", type="password")
+        if st.form_submit_button("Entrar"):
+            if valor == senha:
+                st.session_state["upd_ok"] = True
+                st.rerun()
+            else:
+                st.error("Senha incorreta.")
+    return False
+
+
 def _tabela_execucoes(repo, execucoes: list[dict]) -> None:
     if not execucoes:
         st.info("Nenhuma execução encontrada para este workflow.")
@@ -75,6 +96,9 @@ def render() -> None:
         "A coleta roda no GitHub Actions. Este painel só escolhe o recorte, "
         "dispara o workflow e acompanha o resultado."
     )
+
+    if not _senha_ok():
+        return
 
     if repo is None:
         st.warning(

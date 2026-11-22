@@ -86,3 +86,8 @@ from ses.transform import agregar
 base = publish.carregar_base(Config())
 por_lob_ano = agregar(base, ["lob", "ano"])   # soma antes de dividir
 ```
+
+
+## Risco de firewall no GitHub Actions
+
+Se o SES bloquear o modo headless no runner, a coleta precisa rodar localmente com navegador visivel (sem `--headless`). A apresentacao nao depende disso: o `data/raw` e o snapshot ja versionados continuam validos.
