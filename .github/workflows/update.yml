@@ -74,6 +74,10 @@ jobs:
           FORCAR: ${{ inputs.forcar }}
         run: |
           set -euo pipefail
+          run() {
+            python "$@" 2>&1 | tee -a /tmp/atualizar.log
+            return "${PIPESTATUS[0]}"
+          }
           args=()
           if [ -n "$RAMOS" ]; then
             IFS=',' read -r -a arr <<< "$RAMOS"
@@ -88,13 +92,13 @@ jobs:
               args+=(--forcar)
             fi
             if [ "$COLETAR" = "nao" ]; then
-              python pipeline.py periodo --periodo-ini "$PERIODO_INI" --periodo-fim "$PERIODO_FIM" --offline "${args[@]}"
+              run pipeline.py periodo --periodo-ini "$PERIODO_INI" --periodo-fim "$PERIODO_FIM" --offline "${args[@]}"
             else
-              python pipeline.py periodo --periodo-ini "$PERIODO_INI" --periodo-fim "$PERIODO_FIM" --headless "${args[@]}"
+              run pipeline.py periodo --periodo-ini "$PERIODO_INI" --periodo-fim "$PERIODO_FIM" --headless "${args[@]}"
             fi
           else
             if [ "$COLETAR" = "nao" ]; then
-              python pipeline.py processar
+              run pipeline.py processar
             else
               if [ -n "$ANOS" ]; then
                 IFS=',' read -r -a arr <<< "$ANOS"
@@ -103,9 +107,23 @@ jobs:
               if [ "$FORCAR" = "sim" ]; then
                 args+=(--forcar)
               fi
-              python pipeline.py atualizar --headless "${args[@]}"
+              run pipeline.py atualizar --headless "${args[@]}"
             fi
           fi
+
+      - name: Resumo da atualizacao
+        if: always()
+        run: |
+          {
+            echo "### Atualizacao SES"
+            if [ -f /tmp/atualizar.log ]; then
+              echo '```'
+              tail -n 25 /tmp/atualizar.log
+              echo '```'
+            else
+              echo "Sem log: a etapa de atualizacao nao chegou a rodar."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit do raw e dos snapshots
         run: |

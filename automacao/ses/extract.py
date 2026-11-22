@@ -202,8 +202,22 @@ def abrir_consulta(page, cfg: Config) -> None:
     )
 
 
-def preencher_e_processar(page, c: Consulta, agrupamento: str):
-    """Preenche empresas=Todas, 1 ramo, periodo AAAAMM e clica Processar."""
+def _esperar(fn, timeout: float = 25.0, intervalo: float = 0.5):
+    """Repete `fn` ate devolver algo verdadeiro ou estourar o tempo."""
+    limite = time.time() + timeout
+    while time.time() < limite:
+        try:
+            r = fn()
+            if r:
+                return r
+        except Exception:
+            pass
+        time.sleep(intervalo)
+    return None
+
+
+def _selects(page) -> tuple:
+    """Localiza as listas de Empresas ('Todas') e Ramos ('Todos')."""
     sel_emp = sel_ramo = None
     for i in range(page.locator("select").count()):
         s = page.locator("select").nth(i)
@@ -215,27 +229,88 @@ def preencher_e_processar(page, c: Consulta, agrupamento: str):
             sel_emp = s
         elif "Todos" in textos:
             sel_ramo = s
+    return sel_emp, sel_ramo
+
+
+def _campos_periodo(page):
+    """Espera os dois campos de periodo ficarem visiveis."""
+    def procurar():
+        loc = page.locator("input[maxlength='6']:visible")
+        if loc.count() >= 2:
+            return loc
+        loc = page.locator("input[type=text]:visible")
+        return loc if loc.count() >= 2 else None
+
+    return _esperar(procurar, timeout=30)
+
+
+def preencher_e_processar(page, c: Consulta, agrupamento: str):
+    """Preenche empresas=Todas, 1 ramo, periodo AAAAMM e clica Processar.
+
+    O SES e uma pagina ASP.NET: ao trocar "Empresas", as listas sao recarregadas
+    e os campos de periodo podem reaparecer depois. Por isso cada etapa espera
+    o elemento ficar realmente disponivel, em vez de ler na hora.
+    """
+    sel_emp, sel_ramo = _selects(page)
     if sel_emp is None or sel_ramo is None:
-        raise RuntimeError("listas de Empresas/Ramos nao identificadas")
+        # a pagina pode estar montando as listas: tenta de novo por alguns segundos
+        def _achar():
+            e, r = _selects(page)
+            return (e, r) if e is not None and r is not None else None
+
+        achado = _esperar(_achar, timeout=20)
+        if achado is None:
+            raise RuntimeError("listas de Empresas/Ramos nao identificadas")
+        sel_emp, sel_ramo = achado
 
     v_emp = sel_emp.evaluate(
         "el => ([...el.options].find(o => o.text.trim() === 'Todas') || {}).value"
     )
     sel_emp.select_option([v_emp])
+    page.wait_for_timeout(900)
+    try:
+        page.wait_for_load_state("networkidle", timeout=15000)
+    except Exception:
+        pass
 
-    valores = [o["v"] for o in (_opcoes(sel_ramo) or []) if o["t"].startswith(c.ramo)]
+    # a troca de Empresas pode redesenhar a pagina: relocaliza as listas,
+    # esperando a lista de ramos voltar a ter opcoes
+    def _reachar():
+        e, r = _selects(page)
+        if r is None:
+            return None
+        return (e, r) if (_opcoes(r) or []) else None
+
+    achado = _esperar(_reachar, timeout=20)
+    if achado is not None:
+        sel_emp, sel_ramo = achado
+
+    def _valores_ramo():
+        opcoes = _opcoes(sel_ramo) or []
+        valores = [o["v"] for o in opcoes if o["t"].startswith(c.ramo)]
+        return valores or None
+
+    valores = _esperar(_valores_ramo, timeout=30)
     if not valores:
-        raise RuntimeError(f"ramo {c.ramo} nao aparece na lista do SES")
+        opcoes = [o["t"] for o in (_opcoes(sel_ramo) or [])][:10]
+        raise RuntimeError(
+            f"ramo {c.ramo} nao aparece na lista do SES "
+            f"(primeiras opcoes: {opcoes})"
+        )
     sel_ramo.select_option(valores)
+    page.wait_for_timeout(400)
 
-    campos = page.locator("input[maxlength='6']")
-    if campos.count() < 2:
-        campos = page.locator("input[type=text]:visible")
-    if campos.count() < 2:
-        raise RuntimeError("campos de periodo nao encontrados")
+    campos = _campos_periodo(page)
+    if campos is None:
+        raise RuntimeError(
+            "campos de periodo nao encontrados (a pagina pode nao ter carregado por completo)"
+        )
     inicio, fim = c.periodo
+    campos.nth(0).fill("")
     campos.nth(0).fill(inicio)
+    campos.nth(1).fill("")
     campos.nth(1).fill(fim)
+    page.wait_for_timeout(200)
 
     try:
         page.get_by_text(re.compile(rf"Agrupar por\s+{re.escape(agrupamento)}", re.I)).first.click()

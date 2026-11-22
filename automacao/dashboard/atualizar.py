@@ -100,6 +100,17 @@ def render() -> None:
     if not _senha_ok():
         return
 
+    if repo is not None:
+        with st.expander("Diagnóstico da conexão com o GitHub"):
+            st.caption("Testa token, repositório, workflow e branch — sem disparar nada.")
+            if st.button("Testar conexão"):
+                for etapa in github_api.diagnostico(repo):
+                    texto = f"**{etapa['etapa']}** — {etapa['detalhe']}"
+                    if etapa["ok"]:
+                        st.success(texto)
+                    else:
+                        st.error(texto)
+
     if repo is None:
         st.warning(
             "Token do GitHub não configurado. Preencha `.streamlit/secrets.toml` "

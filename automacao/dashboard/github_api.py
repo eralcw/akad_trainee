@@ -9,6 +9,24 @@ from dataclasses import dataclass
 
 API = "https://api.github.com"
 
+DICAS = {
+    401: "Token inválido, expirado ou revogado. Gere outro e atualize os Secrets.",
+    403: "O token não tem permissão. Em Personal access tokens → Actions, marque 'Read and write' "
+         "no repositório.",
+    404: "Repositório ou workflow não encontrado. Confira owner, repo, workflow e o branch "
+         "(o arquivo precisa existir nesse branch).",
+    422: "O workflow não aceita estes campos. Provavelmente a versão no GitHub ainda é a antiga, "
+         "sem os inputs, ou não tem o gatilho workflow_dispatch.",
+}
+
+
+class ErroGitHub(RuntimeError):
+    def __init__(self, status: int, mensagem: str):
+        self.status = status
+        self.mensagem = mensagem
+        dica = DICAS.get(status, "")
+        super().__init__(f"GitHub respondeu {status}: {mensagem}" + (f" — {dica}" if dica else ""))
+
 
 @dataclass(frozen=True)
 class RepoConfig:
@@ -59,10 +77,14 @@ def _chamar(repo: RepoConfig, caminho: str, metodo: str = "GET", corpo: dict | N
             texto = r.read().decode("utf-8")
             return r.status, (json.loads(texto) if texto else {})
     except urllib.error.HTTPError as e:
-        detalhe = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"GitHub respondeu {e.code}: {detalhe[:400]}") from e
+        bruto = e.read().decode("utf-8", errors="replace")
+        try:
+            mensagem = json.loads(bruto).get("message", bruto)
+        except Exception:
+            mensagem = bruto
+        raise ErroGitHub(e.code, str(mensagem)[:300]) from e
     except urllib.error.URLError as e:
-        raise RuntimeError(f"falha de rede ao falar com o GitHub: {e.reason}") from e
+        raise ErroGitHub(0, f"falha de rede ao falar com o GitHub: {e.reason}") from e
 
 
 def disparar(repo: RepoConfig, inputs: dict) -> bool:
@@ -93,3 +115,45 @@ def url_actions(repo: RepoConfig) -> str:
 
 def em_andamento(execucoes_: list[dict]) -> bool:
     return any(r.get("status") in {"queued", "in_progress", "requested", "waiting"} for r in execucoes_)
+
+
+def diagnostico(repo: RepoConfig) -> list[dict]:
+    """Testa token, repositorio e workflow, na ordem, sem disparar nada."""
+    etapas: list[dict] = []
+
+    def registrar(nome: str, ok: bool, detalhe: str):
+        etapas.append({"etapa": nome, "ok": ok, "detalhe": detalhe})
+
+    try:
+        _, usuario = _chamar(repo, "/user")
+        registrar("Token válido", True, f"autenticado como {usuario.get('login', '?')}")
+    except ErroGitHub as e:
+        registrar("Token válido", False, str(e))
+        return etapas
+
+    try:
+        _, dados = _chamar(repo, f"/repos/{repo.slug}")
+        registrar("Repositório acessível", True, f"{repo.slug} (branch padrão: {dados.get('default_branch', '?')})")
+    except ErroGitHub as e:
+        registrar("Repositório acessível", False, str(e))
+        return etapas
+
+    try:
+        _, wf = _chamar(repo, f"/repos/{repo.slug}/actions/workflows/{repo.workflow}")
+        estado = wf.get("state", "?")
+        registrar(
+            "Workflow encontrado",
+            estado == "active",
+            f"{wf.get('path', repo.workflow)} · estado: {estado}",
+        )
+    except ErroGitHub as e:
+        registrar("Workflow encontrado", False, str(e))
+        return etapas
+
+    try:
+        _, arq = _chamar(repo, f"/repos/{repo.slug}/contents/.github/workflows/{repo.workflow}?ref={repo.ref}")
+        registrar("Arquivo no branch", True, f"{arq.get('path')} em {repo.ref}")
+    except ErroGitHub as e:
+        registrar("Arquivo no branch", False, str(e))
+
+    return etapas
