@@ -1,0 +1,31 @@
+{
+  "run_id": "20261122T220115",
+  "comando": "atualizar",
+  "inicio": "2026-11-22T21:58:31",
+  "coleta": {
+    "coletadas": [],
+    "puladas": [],
+    "falhas": [
+      "0775_2025",
+      "0776_2025"
+    ],
+    "erros": {
+      "0775_2025": "campos de periodo nao encontrados",
+      "0776_2025": "campos de periodo nao encontrados"
+    }
+  },
+  "processamento": {
+    "aprovado": true,
+    "publicado": false,
+    "motivo": "base identica ao snapshot vigente",
+    "snapshot": "20261120T185656",
+    "diff": {
+      "linhas_alteradas": 0,
+      "linhas_novas": 0,
+      "linhas_removidas": 0,
+      "delta_premio_ganho_por_lob": {}
+    }
+  },
+  "fim": "2026-11-22T22:01:15",
+  "sucesso": false
+}
