@@ -33,19 +33,19 @@ def _layout(fig, height: int = 330, ytitle: str | None = None, xtitle: str | Non
         template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="IBM Plex Sans, Segoe UI, sans-serif", size=12, color=INK),
+        font=dict(family="IBM Plex Sans, Segoe UI, sans-serif", size=13, color=INK),
         margin=dict(l=8, r=8, t=34, b=8),
         height=height,
         showlegend=legend,
-        legend=dict(orientation="h", y=1.12, x=0, font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
+        legend=dict(orientation="h", y=1.12, x=0, font=dict(size=12), bgcolor="rgba(0,0,0,0)"),
         hoverlabel=dict(font_family="IBM Plex Mono"),
     )
-    fig.update_xaxes(showgrid=False, linecolor=RULE, tickfont=dict(size=11))
-    fig.update_yaxes(gridcolor="rgba(18,32,29,0.08)", zeroline=False, tickfont=dict(size=11))
+    fig.update_xaxes(showgrid=False, linecolor=RULE, tickfont=dict(size=12))
+    fig.update_yaxes(gridcolor="rgba(18,32,29,0.08)", zeroline=False, tickfont=dict(size=12))
     if ytitle:
-        fig.update_yaxes(title=dict(text=ytitle, font=dict(size=11, color=MUTED)))
+        fig.update_yaxes(title=dict(text=ytitle, font=dict(size=12, color=MUTED)))
     if xtitle:
-        fig.update_xaxes(title=dict(text=xtitle, font=dict(size=11, color=MUTED)))
+        fig.update_xaxes(title=dict(text=xtitle, font=dict(size=12, color=MUTED)))
     return fig
 
 
@@ -364,7 +364,7 @@ def _concorrencia(base_f: pd.DataFrame, resp: list[dict]) -> None:
         seg, x="sinistralidade", y="margem", size="premio", text="seguradora",
         color="share", color_continuous_scale=["#F4F5FD", LILAC], size_max=45,
     )
-    fig.update_traces(textposition="top center", textfont=dict(size=9))
+    fig.update_traces(textposition="top center", textfont=dict(size=10))
     fig.add_vline(x=mercado["sinistralidade"], line_dash="dash", line_color=MUTED)
     fig.add_hline(y=mercado["margem"], line_dash="dash", line_color=MUTED)
     ak = seg[seg["codigo_susep"] == analise.AKAD]
