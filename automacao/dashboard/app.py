@@ -163,8 +163,7 @@ def _metodo_tab() -> None:
         """
     )
     st.link_button("Abrir o workflow no GitHub", f"{REPO_URL}/blob/main/.github/workflows/update.yml")
-    st.link_button("Abrir o EDA", f"{REPO_URL}/blob/main/analise/eda.html")
-    st.link_button("Abrir o roteiro de apresentação", f"{REPO_URL}/blob/main/analise/roteiro_apresentacao.md")
+    st.caption("O EDA e o roteiro de apresentação são documentos pessoais e ficam fora do repositório.")
 
 
 def main() -> None:

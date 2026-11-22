@@ -463,7 +463,7 @@ def _respostas(resp: list[dict]) -> None:
         file_name="respostas_akad.md",
         mime="text/markdown",
     )
-    st.caption("O roteiro completo, com mercado 101 e leitura de cada gráfico, está em `analise/roteiro_apresentacao.md`.")
+    st.caption("O roteiro completo, com mercado 101 e leitura de cada gráfico, é um documento local e não versionado.")
 
 
 # --------------------------------------------------------------------------

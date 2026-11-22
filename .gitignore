@@ -13,5 +13,5 @@ automacao/processed/
 data/atualizacoes/.staging_*
 data/raw/periodos/*.tmp
 
-# roteiro pessoal de apresentacao (gerado; nao versionar)
-analise/roteiro_apresentacao.html
+# analise pessoal (EDA, roteiros, geradores): manter apenas no disco
+analise/
