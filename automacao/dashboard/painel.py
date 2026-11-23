@@ -557,31 +557,12 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
           sub=f"sinistro ocorrido ÷ prêmio ganho, {periodo_de(base_f)}", legenda="Barra = sinistralidade do período (sinistro ÷ prêmio); texto = percentual.")
     st.caption(resp[2]["curta"])
 
-    # ---------------- Q9: pequenos multiplos ----------------
+    # ---------------- Q9: um cartao por LOB ----------------
     _secao("Q9", "tendência anual da sinistralidade")
     trend = analise.tendencias(base_f).set_index("lob")
     anos = sorted(int(a) for a in lob_ano["ano"].unique())
     span = max(anos[-1] - anos[0], 1)
 
-    def rotulo_painel(l: str) -> str:
-        g = lob_ano[lob_ano["lob"] == l].sort_values("ano")
-        if g.empty:
-            return l
-        ini, fim = g["sinistralidade"].iloc[0], g["sinistralidade"].iloc[-1]
-        return f"{l} · {analise.f_pct(ini)} → {analise.f_pct(fim)}"
-
-    d9 = lob_ano.copy()
-    d9["painel"] = d9["lob"].map(rotulo_painel)
-    fig = px.line(
-        d9, x="ano", y="sinistralidade", color="lob", facet_col="painel",
-        facet_col_wrap=2, markers=True, color_discrete_map=analise.LOB_COR,
-        labels={"ano": "", "sinistralidade": "", "lob": ""},
-    )
-    fig.update_traces(line=dict(width=2), marker=dict(size=5, symbol="circle"))
-    fig.update_yaxes(matches=None, tickformat=".1%", showticklabels=True, nticks=4)
-    fig.update_xaxes(dtick=1, tickfont=dict(size=10))
-    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1], font=dict(size=12)))
-    fig.update_layout(showlegend=False)
     melhora = [l for l in trend.index if pd.notna(trend.loc[l, "slope"])
                and trend.loc[l, "slope"] < -0.005
                and abs(trend.loc[l, "slope"]) * span >= trend.loc[l, "vol"]]
@@ -591,11 +572,38 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
         pedacos.append(f"{', '.join(melhora)} {'melhora' if len(melhora) == 1 else 'melhoram'}")
     if vol_max is not None:
         pedacos.append(f"{vol_max} é a mais instável")
-    titulo_q9 = "; ".join(pedacos) if pedacos else "Tendência da sinistralidade por LOB"
-    _plot(fig, 760, legend=False,
-          titulo=titulo_q9,
-          sub="um painel por LOB, escala própria; o título traz a sinistralidade do primeiro e do último ano",
-          legenda="Um painel por LOB, com escala própria. O título de cada painel mostra a sinistralidade do primeiro e do último ano; a inclinação da tendência está na tabela abaixo.")
+    st.markdown(
+        f'<div class="linha-titulo">{" ; ".join(pedacos) if pedacos else "Tendência da sinistralidade por LOB"}</div>',
+        unsafe_allow_html=True,
+    )
+
+    ordem_q9 = [l for l in analise.LOB_ORDEM if l in set(lob_ano["lob"])]
+    for i in range(0, len(ordem_q9), 2):
+        colunas = st.columns(2)
+        for col, l in zip(colunas, ordem_q9[i:i + 2]):
+            with col:
+                with st.container(border=True):
+                    g = lob_ano[lob_ano["lob"] == l].sort_values("ano")
+                    if g.empty:
+                        continue
+                    fig = px.line(
+                        g, x="ano", y="sinistralidade", markers=True,
+                        color_discrete_sequence=[analise.LOB_COR.get(l, PINE)],
+                        labels={"ano": "", "sinistralidade": ""},
+                    )
+                    fig.update_traces(line=dict(width=2.2), marker=dict(size=5))
+                    fig.update_yaxes(tickformat=".1%", nticks=4)
+                    fig.update_xaxes(dtick=1, tickfont=dict(size=10))
+                    if 2022 in set(g["ano"]):
+                        fig.add_vline(x=2022, line_dash="dash", line_color=RULE, line_width=1)
+                    ini, fim = g["sinistralidade"].iloc[0], g["sinistralidade"].iloc[-1]
+                    _plot(fig, 230, legend=False, topo=46,
+                          titulo=f"{l} · {analise.f_pct(ini)} → {analise.f_pct(fim)}")
+
+    st.caption(
+        "Cada cartão é uma LOB, com escala própria; o título mostra a sinistralidade do primeiro e do último ano. "
+        "A linha tracejada marca 2022, início da fase Akad. Todos os anos estão no eixo horizontal."
+    )
 
     _tab(
         trend.reset_index(),
