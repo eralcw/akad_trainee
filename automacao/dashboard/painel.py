@@ -21,20 +21,30 @@ PINK = "#F7A3BF"
 NAVY = "#143057"
 SIGNAL = "#6B72D8"
 NEGATIVO = "#9AA0B5"
-CFG = {"displayModeBar": False}
+CFG = {
+    "displaylogo": False,
+    "scrollZoom": False,
+    "doubleClick": "reset",
+    "modeBarButtonsToRemove": [
+        "lasso2d", "select2d", "autoScale2d", "toggleSpikelines",
+        "hoverCompareCartesian", "hoverClosestCartesian", "zoomIn2d", "zoomOut2d",
+    ],
+    "toImageButtonOptions": {"filename": "akad-grafico", "scale": 2},
+}
 
 
 # --------------------------------------------------------------------------
 # Helpers visuais
 # --------------------------------------------------------------------------
 
-def _layout(fig, height: int = 330, ytitle: str | None = None, xtitle: str | None = None, legend: bool = True):
+def _layout(fig, height: int = 330, ytitle: str | None = None, xtitle: str | None = None,
+            legend: bool = True, topo: int = 44):
     fig.update_layout(
         template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="IBM Plex Sans, Segoe UI, sans-serif", size=13, color=INK),
-        margin=dict(l=8, r=8, t=34, b=8),
+        margin=dict(l=8, r=8, t=topo, b=8),
         height=height,
         showlegend=legend,
         legend=dict(orientation="h", y=1.12, x=0, font=dict(size=12), bgcolor="rgba(0,0,0,0)"),
@@ -49,8 +59,21 @@ def _layout(fig, height: int = 330, ytitle: str | None = None, xtitle: str | Non
     return fig
 
 
-def _plot(fig, height: int = 330, ytitle: str | None = None, xtitle: str | None = None, legend: bool = True):
-    st.plotly_chart(_layout(fig, height, ytitle, xtitle, legend), use_container_width=True, config=CFG)
+def _plot(fig, height: int = 330, ytitle: str | None = None, xtitle: str | None = None,
+          legend: bool = True, topo: int = 44):
+    st.plotly_chart(_layout(fig, height, ytitle, xtitle, legend, topo), use_container_width=True, config=CFG)
+
+
+def _folga_x(fig, valores, folga: float = 0.22):
+    """Abre espaco no eixo X para rotulos escritos fora das barras."""
+    vals = [float(v) for v in valores if pd.notna(v)]
+    if not vals:
+        return fig
+    lo, hi = min(0.0, min(vals)), max(0.0, max(vals))
+    span = (hi - lo) or 1.0
+    esq = lo - span * folga if lo < 0 else 0.0
+    fig.update_xaxes(range=[esq, hi + span * folga])
+    return fig
 
 
 def _ledger(itens) -> None:
@@ -138,6 +161,7 @@ def _mercado(lob: pd.DataFrame, base_f: pd.DataFrame, resp: list[dict]) -> None:
         color_discrete_map=analise.LOB_COR, text=d["premio_bi"].map(lambda v: f"{v:.1f} bi"),
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
+    _folga_x(fig, d["premio_bi"])
     _plot(fig, 300, xtitle="R$ bilhões", legend=False)
     st.caption(resp[0]["curta"])
 
@@ -240,6 +264,7 @@ def _rentabilidade(lob: pd.DataFrame, resp: list[dict]) -> None:
         color_discrete_map=analise.LOB_COR, text=d["lucro_bi"].map(lambda v: f"{v:.2f} bi"),
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
+    _folga_x(fig, d["lucro_bi"])
     _plot(fig, 300, xtitle="R$ bilhões", legend=False)
     st.caption(resp[4]["curta"])
 
@@ -251,6 +276,7 @@ def _rentabilidade(lob: pd.DataFrame, resp: list[dict]) -> None:
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
     fig.update_xaxes(tickformat=".0%")
+    _folga_x(fig, d["margem"])
     _plot(fig, 300, xtitle="margem", legend=False)
     st.caption(resp[5]["curta"])
 
@@ -275,6 +301,7 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
     fig.update_xaxes(tickformat=".0%")
+    _folga_x(fig, d["sinistralidade"])
     _plot(fig, 300, xtitle="sinistralidade", legend=False)
     st.caption(resp[2]["curta"])
 
@@ -295,10 +322,24 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
         trend, x="vol", y="sin_media", size="premio", color="lob", text="lob",
         color_discrete_map=analise.LOB_COR, size_max=45,
     )
-    fig.update_traces(textposition="top center")
-    fig.update_xaxes(tickformat=".0%")
-    fig.update_yaxes(tickformat=".0%")
-    _plot(fig, 330, xtitle="volatilidade (desvio da sinistralidade)", ytitle="média", legend=False)
+    fig.update_traces(textposition="top center", textfont=dict(size=11.5))
+    xmax = float(trend["vol"].max() or 0)
+    ymax = float(trend["sin_media"].max() or 0)
+    xmin = float(trend["vol"].min() or 0)
+    fig.update_xaxes(
+        tickformat=".0%",
+        range=[max(0, xmin - xmax * 0.18), xmax * 1.14],
+    )
+    fig.update_yaxes(
+        tickformat=".0%",
+        range=[max(0, float(trend["sin_media"].min() or 0) * 0.6), ymax * 1.22],
+    )
+    _plot(
+        fig, 390,
+        xtitle="volatilidade da sinistralidade (desvio-padrão)",
+        ytitle="sinistralidade média anual",
+        legend=False, topo=56,
+    )
     _tab(
         trend,
         ["lob", "sin_media", "vol", "slope", "cresc_sinistro", "margem_media"],
@@ -338,8 +379,27 @@ def _concorrencia(base_f: pd.DataFrame, resp: list[dict]) -> None:
         f"{n} seguradoras explicam 80% do prêmio de {lob_sel}. "
         f"Mercado: margem {analise.f_pct(mercado['margem'])} e sinistralidade {analise.f_pct(mercado['sinistralidade'])}."
     )
+
+    busca = st.text_input(
+        "Buscar seguradora (código SUSEP ou nome)", value="", key="conc_busca",
+        placeholder="ex.: 02798 ou AKAD",
+    ).strip()
+    destaques = set()
+    mesa_exibir = mesa
+    if busca:
+        q = busca.upper()
+        achou = mesa[
+            mesa["codigo_susep"].astype(str).str.contains(q, na=False)
+            | mesa["seguradora"].astype(str).str.upper().str.contains(q, na=False)
+        ]
+        if achou.empty:
+            st.warning("Nenhuma seguradora relevante desta LOB corresponde à busca.")
+        else:
+            mesa_exibir = achou
+            destaques = set(achou["codigo_susep"])
+
     _tab(
-        mesa,
+        mesa_exibir,
         ["seguradora", "premio", "share", "sinistralidade", "margem", "delta_sin", "delta_margem"],
         {
             "premio": analise.f_mi, "share": analise.f_pct,
@@ -360,25 +420,114 @@ def _concorrencia(base_f: pd.DataFrame, resp: list[dict]) -> None:
     fig.update_yaxes(tickformat=".0%")
     _plot(fig, 280, xtitle="seguradoras ordenadas por prêmio", ytitle="share acumulado", legend=False)
 
-    fig = px.scatter(
-        seg, x="sinistralidade", y="margem", size="premio", text="seguradora",
-        color="share", color_continuous_scale=["#F4F5FD", LILAC], size_max=45,
+    # --- mapa de posicionamento: só as relevantes, com escala controlada ---
+    st.markdown("##### Posicionamento: risco × rentabilidade")
+    mostrar_todas = st.checkbox(
+        "Incluir as demais seguradoras da LOB (pontos pequenos, sem rótulo)", value=False
     )
-    fig.update_traces(textposition="top center", textfont=dict(size=10))
-    fig.add_vline(x=mercado["sinistralidade"], line_dash="dash", line_color=MUTED)
-    fig.add_hline(y=mercado["margem"], line_dash="dash", line_color=MUTED)
-    ak = seg[seg["codigo_susep"] == analise.AKAD]
+    base_mapa = seg if mostrar_todas else mesa.copy()
+    base_mapa = base_mapa.sort_values("premio", ascending=False).head(24).copy()
+
+    x_lo, x_hi = -0.25, 1.25
+    y_lo, y_hi = -0.70, 0.90
+    base_mapa["x"] = base_mapa["sinistralidade"].clip(x_lo, x_hi)
+    base_mapa["y"] = base_mapa["margem"].clip(y_lo, y_hi)
+    base_mapa["fora"] = (
+        base_mapa["sinistralidade"].ne(base_mapa["x"])
+        | base_mapa["margem"].ne(base_mapa["y"])
+    )
+    rotulados = set(base_mapa.nlargest(6, "premio")["codigo_susep"]) | {analise.AKAD}
+    base_mapa["rotulo"] = [
+        analise.nome_curto(n) if c in rotulados else ""
+        for c, n in zip(base_mapa["codigo_susep"], base_mapa["seguradora"])
+    ]
+
+    fig = px.scatter(
+        base_mapa,
+        x="x",
+        y="y",
+        size="premio",
+        color="share",
+        text="rotulo",
+        hover_name="seguradora",
+        color_continuous_scale=["#F4F5FD", LILAC],
+        size_max=38,
+        custom_data=[
+            "premio", "share", "sinistralidade", "margem", "fora",
+        ],
+    )
+    fig.update_traces(
+        textposition="top center",
+        textfont=dict(size=10.5, color=INK),
+        marker=dict(line=dict(width=1, color="#FFFFFF")),
+        hovertemplate=(
+            "<b>%{hovertext}</b><br>"
+            "prêmio R$ %{customdata[0]:,.0f}<br>"
+            "share %{customdata[1]:.1%}<br>"
+            "sinistralidade %{customdata[2]:.1%}<br>"
+            "margem %{customdata[3]:.1%}"
+            "<extra></extra>"
+        ),
+    )
+
+    # quadrantes nomeados
+    xm, ym = mercado["sinistralidade"], mercado["margem"]
+    fig.add_vline(x=xm, line_dash="dash", line_color=MUTED, line_width=1)
+    fig.add_hline(y=ym, line_dash="dash", line_color=MUTED, line_width=1)
+    for x, y, txt, cor in [
+        (x_lo + 0.03, y_hi - 0.06, "risco baixo · margem alta", "#2E7D5B"),
+        (x_hi - 0.03, y_hi - 0.06, "risco alto · margem alta", "#B4723A"),
+        (x_lo + 0.03, y_lo + 0.04, "risco baixo · margem baixa", "#9AA0B5"),
+        (x_hi - 0.03, y_lo + 0.04, "risco alto · margem baixa", "#C8451F"),
+    ]:
+        fig.add_annotation(
+            x=x, y=y, text=txt, showarrow=False,
+            font=dict(size=10, color=cor), opacity=0.85,
+            xanchor="left" if x < 0 else "right",
+            yanchor="top" if y > 0 else "bottom",
+        )
+
+    # Akad em destaque
+    if destaques:
+        marcados = base_mapa[base_mapa["codigo_susep"].isin(destaques)]
+        if not marcados.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=marcados["x"], y=marcados["y"], mode="markers",
+                    marker=dict(symbol="circle-open", size=26, color="#143057",
+                                line=dict(width=2.5)),
+                    name="busca", hoverinfo="skip", showlegend=False,
+                )
+            )
+
+    ak = base_mapa[base_mapa["codigo_susep"] == analise.AKAD]
     if not ak.empty:
         fig.add_trace(
             go.Scatter(
-                x=ak["sinistralidade"], y=ak["margem"], mode="markers+text",
-                marker=dict(symbol="star", size=16, color=analise.COR_AKAD),
-                text=["Akad"], textposition="bottom center", name="Akad",
+                x=ak["x"], y=ak["y"], mode="markers",
+                marker=dict(symbol="star", size=20, color=analise.COR_AKAD,
+                            line=dict(width=1.5, color="#FFFFFF")),
+                name="Akad", hoverinfo="skip", showlegend=False,
             )
         )
-    fig.update_xaxes(tickformat=".0%")
-    fig.update_yaxes(tickformat=".0%")
-    _plot(fig, 360, xtitle="sinistralidade", ytitle="margem", legend=False)
+
+    fig.update_xaxes(tickformat=".0%", range=[x_lo - 0.03, x_hi + 0.03])
+    fig.update_yaxes(tickformat=".0%", range=[y_lo - 0.03, y_hi + 0.03])
+    _plot(fig, 400, xtitle="sinistralidade", ytitle="margem", legend=False)
+    st.caption(
+        "Cada ponto é uma seguradora: tamanho = prêmio, cor = share. "
+        "As linhas tracejadas marcam a média do mercado da LOB; o quadrante superior esquerdo "
+        "é o melhor (menos sinistro, mais margem). Só entram as relevantes (top 80%) e os rótulos "
+        "ficam nas seis maiores e na Akad; passe o mouse para ver todas."
+    )
+    if base_mapa["fora"].any():
+        fora = base_mapa[base_mapa["fora"]][["seguradora", "sinistralidade", "margem"]]
+        nomes = "; ".join(
+            f"{analise.nome_curto(r.seguradora)} ({analise.f_pct(r.sinistralidade)} / {analise.f_pct(r.margem)})"
+            for r in fora.head(6).itertuples()
+        )
+        resto = "" if len(fora) <= 6 else f"; e mais {len(fora) - 6}"
+        st.caption(f"Fora da escala, presos na borda (sinistralidade / margem): {nomes}{resto}.")
     st.caption(resp[7]["curta"])
 
 
@@ -456,6 +605,7 @@ def _akad(base_f: pd.DataFrame, resp: list[dict]) -> None:
     fig.update_traces(textposition="outside", cliponaxis=False)
     fig.add_vline(x=0, line_color=MUTED)
     fig.update_xaxes(tickformat=".0%")
+    _folga_x(fig, comp["delta_mg"])
     _plot(fig, 300, xtitle="margem da Akad − margem do mercado", legend=False)
     st.caption("O gráfico mostra a margem; a tabela acima traz pares e relevantes também em sinistralidade.")
     st.caption(resp[10]["curta"])
@@ -509,6 +659,108 @@ def _respostas(resp: list[dict]) -> None:
         mime="text/markdown",
     )
     st.caption("O roteiro completo, com mercado 101 e leitura de cada gráfico, é um documento local e não versionado.")
+
+
+# --------------------------------------------------------------------------
+# Aba Dados: a base linha a linha, com busca e download
+# --------------------------------------------------------------------------
+
+COLS_DADOS = [
+    "lob", "ramo_codigo", "ano", "codigo_susep", "seguradora",
+    "premio_ganho", "sinistro_ocorrido", "despesa_resseguro",
+    "receita_resseguro", "despesa_comercial",
+    "sinistralidade", "lucro", "margem",
+]
+
+
+def _dados(base: pd.DataFrame) -> None:
+    st.markdown("#### Base linha a linha")
+    st.caption(
+        "Uma linha por seguradora, ramo e ano — a mesma tabela do `base.csv`. "
+        "Filtre, busque por código SUSEP ou nome e baixe o recorte."
+    )
+
+    anos = sorted(int(a) for a in base["ano"].unique())
+    lobs_disp = [l for l in analise.LOB_ORDEM if l in set(base["lob"])]
+    c1, c2 = st.columns([1.3, 1])
+    lobs = c1.multiselect("LOBs", lobs_disp, default=lobs_disp, key="dados_lobs")
+    faixa = c2.slider("Anos", min(anos), max(anos), (min(anos), max(anos)), key="dados_anos")
+
+    c3, c4 = st.columns([1, 1.6])
+    ramos_disp = sorted(base.loc[base["lob"].isin(lobs), "ramo_codigo"].unique()) if lobs else []
+    ramos = c3.multiselect("Ramos", ramos_disp, default=[], key="dados_ramos")
+    busca = c4.text_input(
+        "Buscar por código SUSEP ou nome", value="", key="dados_busca",
+        placeholder="ex.: 02798 ou AKAD",
+    ).strip()
+
+    d = base[base["lob"].isin(lobs) & base["ano"].between(faixa[0], faixa[1])]
+    if ramos:
+        d = d[d["ramo_codigo"].isin(ramos)]
+    if busca:
+        q = busca.upper()
+        d = d[
+            d["codigo_susep"].astype(str).str.contains(q, na=False)
+            | d["seguradora"].astype(str).str.upper().str.contains(q, na=False)
+        ]
+
+    if d.empty:
+        st.warning("Nenhuma linha com esses filtros.")
+        return
+
+    m = analise.metricas(d)
+    _ledger(
+        [
+            ("Linhas", f"{len(d):,}".replace(",", "."), "seguradora × ramo × ano"),
+            ("Prêmio ganho", analise.f_bi(m["premio"]), "soma do recorte"),
+            ("Sinistralidade", analise.f_pct(m["sinistralidade"]), "sinistro ÷ prêmio"),
+            ("Margem", analise.f_pct(m["margem"]), "resultado técnico ÷ prêmio"),
+        ]
+    )
+
+    visao = d[COLS_DADOS].sort_values(
+        ["lob", "ano", "premio_ganho"], ascending=[True, True, False]
+    )
+    st.dataframe(
+        visao,
+        hide_index=True,
+        use_container_width=True,
+        height=460,
+        column_config={
+            "lob": st.column_config.TextColumn("LOB", width="small"),
+            "ramo_codigo": st.column_config.TextColumn("Ramo", width="small"),
+            "ano": st.column_config.NumberColumn("Ano", width="small", format="%d"),
+            "codigo_susep": st.column_config.TextColumn("Código", width="small"),
+            "seguradora": st.column_config.TextColumn("Seguradora", width="large"),
+            "premio_ganho": st.column_config.NumberColumn("Prêmio", format="%.0f"),
+            "sinistro_ocorrido": st.column_config.NumberColumn("Sinistro", format="%.0f"),
+            "despesa_resseguro": st.column_config.NumberColumn("Desp. resseg.", format="%.0f"),
+            "receita_resseguro": st.column_config.NumberColumn("Rec. resseg.", format="%.0f"),
+            "despesa_comercial": st.column_config.NumberColumn("Desp. comercial", format="%.0f"),
+            "sinistralidade": st.column_config.NumberColumn("Sinistr.", format="%.1f%%"),
+            "lucro": st.column_config.NumberColumn("Resultado", format="%.0f"),
+            "margem": st.column_config.NumberColumn("Margem", format="%.1f%%"),
+        },
+    )
+    st.caption(
+        "Sinistralidade e margem aparecem vazias quando o prêmio é zero — "
+        "a razão não existe nesse caso. Valores negativos são estornos/ajustes, não erro."
+    )
+
+    st.download_button(
+        "Baixar recorte em CSV",
+        visao.to_csv(index=False).encode("utf-8-sig"),
+        file_name="base_recorte.csv",
+        mime="text/csv",
+    )
+
+
+def render_dados() -> None:
+    base = _base_cache()
+    if base.empty:
+        st.error("Nenhum snapshot anual publicado. Use a aba Atualizar base.")
+        return
+    _dados(base)
 
 
 # --------------------------------------------------------------------------

@@ -176,11 +176,13 @@ def main() -> None:
     s = dados.status_geral()
     _header()
     _sidebar(s)
-    tab_painel, tab_atualizar, tab_status, tab_metodo = st.tabs(
-        ["Painel", "Atualizar base", "Status", "Método"]
+    tab_painel, tab_dados, tab_atualizar, tab_status, tab_metodo = st.tabs(
+        ["Painel", "Dados", "Atualizar base", "Status", "Método"]
     )
     with tab_painel:
         painel.render()
+    with tab_dados:
+        painel.render_dados()
     with tab_atualizar:
         atualizar.render()
     with tab_status:
