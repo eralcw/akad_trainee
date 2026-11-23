@@ -59,11 +59,11 @@ def _sidebar(s: dict) -> None:
         st.markdown(f"**{s['parciais']}** recorte(s) salvo(s)")
         st.divider()
         if repo is not None:
-            st.link_button("Ver histórico de atualizações", github_api.url_actions(repo), use_container_width=True)
+            st.link_button("Ver histórico de atualizações", github_api.url_actions(repo), width="stretch")
             st.caption("Atualização automática conectada.")
         else:
             st.caption("Atualização automática não configurada; o painel só mostra os dados.")
-        st.link_button("Ver projeto no GitHub", REPO_URL, use_container_width=True)
+        st.link_button("Ver projeto no GitHub", REPO_URL, width="stretch")
         st.divider()
         st.caption(
             "Este painel só mostra os dados. Quem baixa e confere as informações é o sistema "
@@ -97,7 +97,7 @@ def _status_tab(s: dict) -> None:
         st.dataframe(
             df,
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
             column_config={
                 "atualizacao": st.column_config.TextColumn("Atualização"),
                 "criado_em": st.column_config.TextColumn("Criado em"),
@@ -123,6 +123,22 @@ def _status_tab(s: dict) -> None:
 
 def _metodo_tab() -> None:
     st.subheader("Como a atualização funciona")
+    st.markdown(
+        """
+        <div class="fluxo">
+          <div class="passo"><b>1. SES</b><span>formulário da SUSEP</span></div>
+          <div class="seta">→</div>
+          <div class="passo"><b>2. Coleta</b><span>robô baixa o .xls de cada ramo e ano</span></div>
+          <div class="seta">→</div>
+          <div class="passo"><b>3. Conferência</b><span>soma das seguradoras vs linha Totais</span></div>
+          <div class="seta">→</div>
+          <div class="passo"><b>4. Base</b><span>snapshot validado e versionado</span></div>
+          <div class="seta">→</div>
+          <div class="passo"><b>5. Painel</b><span>gráficos e respostas</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown(
         """
         **Ano fechado.** O workflow pede janeiro a dezembro ao SES para os ramos escolhidos.

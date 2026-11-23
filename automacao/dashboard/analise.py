@@ -16,11 +16,11 @@ from ses.config import Config
 
 LOB_ORDEM = ["Transportes", "Empresarial", "Garantia", "RCG", "E&O"]
 LOB_COR = {
-    "Transportes": "#F7A3BF",
+    "Transportes": "#D9668F",
     "Empresarial": "#6B72D8",
     "Garantia": "#8C4A6B",
     "RCG": "#143057",
-    "E&O": "#E9256A",
+    "E&O": "#2BA3A8",
 }
 AKAD = "02798"
 COR_AKAD = "#E9256A"
@@ -345,7 +345,8 @@ def f_din(v) -> str:
 
 _SIGLAS = {"BTG", "XL", "HDI", "AIG", "IRB", "BV", "BVIX", "SA"}
 _RUIDO = {
-    "S.A.", "S.A", "S/A", "SA", "SEGUROS", "SEGURO", "SEGURADORA", "COMPANHIA", "DE",
+    "S.A.", "S.A", "S/A", "SA", "SEGUROS", "SEGURO", "SEGURADORA", "COMPANHIA",
+    "DE", "DO", "DA", "DAS", "DOS", "E", "EM",
     "BRASIL", "GERAIS", "CORPORATIVOS", "PATRIMONIAIS",
 }
 

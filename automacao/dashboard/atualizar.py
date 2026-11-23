@@ -78,7 +78,7 @@ def _tabela_execucoes(repo, execucoes: list[dict]) -> None:
     st.dataframe(
         df,
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "link": st.column_config.LinkColumn("Abrir", display_text="ver no GitHub"),
             "run": st.column_config.TextColumn("Run"),

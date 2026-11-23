@@ -44,14 +44,17 @@ def _layout(fig, height: int = 330, ytitle: str | None = None, xtitle: str | Non
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="IBM Plex Sans, Segoe UI, sans-serif", size=13, color=INK),
+        separators=",.",
         margin=dict(l=8, r=8, t=topo, b=8),
         height=height,
         showlegend=legend,
-        legend=dict(orientation="h", y=1.12, x=0, font=dict(size=12), bgcolor="rgba(0,0,0,0)"),
+        legend=dict(orientation="h", y=1.12, x=0, font=dict(size=12),
+                    bgcolor="rgba(0,0,0,0)", title=dict(text="")),
         hoverlabel=dict(font_family="IBM Plex Mono"),
     )
-    fig.update_xaxes(showgrid=False, linecolor=RULE, tickfont=dict(size=12))
-    fig.update_yaxes(gridcolor="rgba(18,32,29,0.08)", zeroline=False, tickfont=dict(size=12))
+    fig.update_xaxes(showgrid=False, linecolor=RULE, tickfont=dict(size=12), automargin=True)
+    fig.update_yaxes(gridcolor="rgba(18,32,29,0.08)", zeroline=False, tickfont=dict(size=12),
+                     automargin=True)
     if ytitle:
         fig.update_yaxes(title=dict(text=ytitle, font=dict(size=12, color=MUTED)))
     if xtitle:
@@ -59,9 +62,29 @@ def _layout(fig, height: int = 330, ytitle: str | None = None, xtitle: str | Non
     return fig
 
 
+def _titulo(fig, principal: str, sub: str = ""):
+    """Titulo que diz a conclusao; o tema vai no subtitulo."""
+    texto = f"<b>{principal}</b>"
+    if sub:
+        texto += f"<br><span style='font-size:12px;color:{MUTED}'>{sub}</span>"
+    fig.update_layout(title=dict(text=texto, x=0, xanchor="left",
+                                 font=dict(size=15, color=INK)))
+    return fig
+
+
 def _plot(fig, height: int = 330, ytitle: str | None = None, xtitle: str | None = None,
-          legend: bool = True, topo: int = 44):
-    st.plotly_chart(_layout(fig, height, ytitle, xtitle, legend, topo), use_container_width=True, config=CFG)
+          legend: bool = True, topo: int = 44, titulo: str | None = None, sub: str = ""):
+    if titulo:
+        _titulo(fig, titulo, sub)
+        topo = max(topo, 74 if sub else 58)
+    st.plotly_chart(_layout(fig, height, ytitle, xtitle, legend, topo),
+                    width="stretch", config=CFG)
+
+
+def _maior_no_topo(fig):
+    """Nas barras horizontais, coloca a maior categoria no topo."""
+    fig.update_yaxes(categoryorder="total ascending", title=None)
+    return fig
 
 
 def _folga_x(fig, valores, folga: float = 0.22):
@@ -95,7 +118,7 @@ def _tab(df: pd.DataFrame, cols, fmts, headers) -> None:
     st.dataframe(
         d[cols].rename(columns=headers),
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -124,28 +147,58 @@ def _visao(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFrame, resp:
     fig = px.line(
         d, x="ano", y="premio_bi", color="lob", markers=True,
         color_discrete_map=analise.LOB_COR,
+        labels={"ano": "ano", "premio_bi": "prêmio ganho (R$ bi)", "lob": "LOB"},
     )
-    fig.update_traces(line=dict(width=2), marker=dict(size=5))
+    fig.update_traces(line=dict(width=2.2), marker=dict(size=5))
     fig.update_xaxes(dtick=1)
-    _plot(fig, 340, ytitle="R$ bilhões", legend=True)
+    topo = lob["lob"].iloc[0]
+    cresceu = all(
+        g.sort_values("ano")["premio"].iloc[-1] >= g.sort_values("ano")["premio"].iloc[0]
+        for _, g in lob_ano.groupby("lob")
+    )
+    titulo = f"{topo} lidera em todos os anos" + ("; todas as LOBs cresceram" if cresceu else "")
+    _plot(fig, 360, ytitle="R$ bilhões", legend=True,
+          titulo=titulo, sub="prêmio ganho por LOB e ano, valores nominais")
 
     pivot = lob_ano.pivot(index="lob", columns="ano", values="sinistralidade")
     pivot = pivot.reindex([l for l in analise.LOB_ORDEM if l in pivot.index])
     texto = [[analise.f_pct(v) for v in row] for row in pivot.values]
+    zmax = float(pivot.max().max()) if not pivot.empty else 1.0
     heat = go.Figure(
         go.Heatmap(
             z=pivot.values,
             x=[str(c) for c in pivot.columns],
             y=pivot.index,
-            colorscale=[[0, "#F4F5FD"], [0.5, PINK], [1, PINE]],
+            colorscale=[[0, "#FBE9EF"], [0.35, "#F7A3BF"], [0.7, "#D9668F"], [1, "#8C1D45"]],
+            zmin=0.0, zmax=max(zmax, 0.01),
             text=texto,
             texttemplate="%{text}",
             showscale=False,
             hovertemplate="%{y} · %{x}<br>sinistralidade %{text}<extra></extra>",
         )
     )
-    st.markdown("#### Sinistralidade por LOB e ano")
-    _plot(heat, 280, legend=False)
+    heat.update_yaxes(autorange="reversed")
+    # anota o pico do periodo, se for alto
+    if not pivot.empty:
+        col = pivot.stack().idxmax()
+        lob_pico, ano_pico = col[0], col[1]
+        valor = float(pivot.loc[lob_pico, ano_pico])
+        media = float(base_f["sinistro_ocorrido"].sum() / base_f["premio_ganho"].sum()) if base_f["premio_ganho"].sum() else 0
+        if valor > media * 1.4:
+            heat.add_annotation(
+                x=str(ano_pico), y=lob_pico,
+                text=f"pico: {analise.f_pct(valor)}",
+                showarrow=True, arrowhead=0, ax=0, ay=-28,
+                font=dict(size=11, color=INK), bgcolor="rgba(255,255,255,0.85)",
+            )
+    if not pivot.empty:
+        pico_lob, pico_ano = pivot.stack().idxmax()
+        titulo_heat = f"{pico_lob} tem o pior ano: {analise.f_pct(float(pivot.loc[pico_lob, pico_ano]))} em {pico_ano}"
+    else:
+        titulo_heat = "Sinistralidade por LOB e ano"
+    _plot(heat, 300, legend=False,
+          titulo=titulo_heat,
+          sub="cor mais quente = maior parcela do prêmio consumida por sinistro")
 
     st.markdown("#### Leitura rápida")
     for item in resp[:3] + [resp[6], resp[8]]:
@@ -153,218 +206,345 @@ def _visao(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFrame, resp:
 
 
 def _mercado(lob: pd.DataFrame, base_f: pd.DataFrame, resp: list[dict]) -> None:
-    st.markdown("#### Q1 · prêmio ganho por LOB")
+    # ---------------- Q1 ----------------
+    total = float(lob["premio"].sum())
+    top = lob["lob"].iloc[0]
     d = lob.sort_values("premio").copy()
     d["premio_bi"] = d["premio"] / 1e9
+    d["rotulo"] = [f"{analise.f_bi(v)}  ({analise.f_pct(v / total, 0)})" for v in d["premio"]]
     fig = px.bar(
         d, x="premio_bi", y="lob", orientation="h", color="lob",
-        color_discrete_map=analise.LOB_COR, text=d["premio_bi"].map(lambda v: f"{v:.1f} bi"),
+        color_discrete_map=analise.LOB_COR, text="rotulo",
+        labels={"premio_bi": "prêmio ganho (R$ bi)", "lob": ""},
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
-    _folga_x(fig, d["premio_bi"])
-    _plot(fig, 300, xtitle="R$ bilhões", legend=False)
+    _maior_no_topo(fig)
+    _folga_x(fig, d["premio_bi"], 0.34)
+    _plot(fig, 310, legend=False,
+          titulo=f"{top} é a maior LOB: {analise.f_bi(lob['premio'].max())} ({analise.f_pct(lob['premio'].max() / total, 0)})",
+          sub=f"prêmio ganho acumulado, {periodo_de(base_f)}; porcentagem do total das LOBs")
     st.caption(resp[0]["curta"])
 
-    anos_f = sorted(int(a) for a in base_f["ano"].unique())
-    periodo_f = f"{anos_f[0]}–{anos_f[-1]}" if len(anos_f) > 1 else str(anos_f[0])
-    st.markdown(f"#### Q7 · crescimento do prêmio {periodo_f}")
-    cresc = analise.crescimento(base_f)
-    if cresc.empty:
-        st.info("Selecione pelo menos dois anos para calcular crescimento.")
-    else:
-        fig = go.Figure()
-        for lname, r in cresc.iterrows():
-            cor = analise.LOB_COR.get(lname, PINE)
-            fig.add_trace(
-                go.Scatter(
-                    x=[r["primeiro"] / 1e9, r["ultimo"] / 1e9],
-                    y=[lname, lname],
-                    mode="lines",
-                    line=dict(color=cor, width=3),
-                    showlegend=False,
-                    hoverinfo="skip",
-                )
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=[r["primeiro"] / 1e9],
-                    y=[lname],
-                    mode="markers",
-                    marker=dict(color=cor, size=9, line=dict(color="#FFFFFF", width=1)),
-                    showlegend=False,
-                    hovertemplate=f"{lname} {int(r['ano_ini'])}: R$ %{{x:.2f}} bi<extra></extra>",
-                )
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=[r["ultimo"] / 1e9],
-                    y=[lname],
-                    mode="markers+text",
-                    marker=dict(color=cor, size=12, line=dict(color="#FFFFFF", width=1)),
-                    text=[analise.f_pct(r["pct"])],
-                    textposition="middle right",
-                    showlegend=False,
-                    hovertemplate=f"{lname} {int(r['ano_fim'])}: R$ %{{x:.2f}} bi<extra></extra>",
-                )
-            )
-        _plot(fig, 320, xtitle="prêmio ganho, R$ bilhões", legend=False)
-        _tab(
-            cresc.reset_index(),
-            ["lob", "primeiro", "ultimo", "abs", "pct"],
-            {"primeiro": analise.f_bi, "ultimo": analise.f_bi, "abs": analise.f_bi, "pct": analise.f_pct},
-            {"lob": "LOB", "primeiro": str(anos_f[0]), "ultimo": str(anos_f[-1]), "abs": "Variação absoluta", "pct": "Variação %"},
-        )
-        st.caption(resp[6]["curta"])
-
-    st.markdown("#### Q2 · seguradoras ativas")
+    # ---------------- Q2 ----------------
     ativas = analise.ativas_por_ano(base_f)
     ativas_pres = analise.ativas_por_ano(base_f, "presenca")
     anos = sorted(ativas.columns)
     if len(anos) >= 2:
         a0, a1 = anos[0], anos[-1]
+        cats = [l for l in analise.LOB_ORDEM if l in ativas.index]
         linhas = []
-        for lname in analise.LOB_ORDEM:
-            if lname not in ativas.index:
-                continue
+        for lname in cats:
             linhas.append({"lob": lname, "ano": str(a0), "ativas": int(ativas.loc[lname, a0])})
             linhas.append({"lob": lname, "ano": str(a1), "ativas": int(ativas.loc[lname, a1])})
         df = pd.DataFrame(linhas)
         fig = px.bar(
             df, x="lob", y="ativas", color="ano", barmode="group",
-            color_discrete_sequence=[LILAC, PINE],
+            color_discrete_sequence=[NEGATIVO, NAVY],
+            labels={"lob": "", "ativas": "seguradoras ativas", "ano": "ano"},
         )
-        _plot(fig, 320, ytitle="seguradoras com prêmio > 0", legend=True)
+        fig.update_traces(texttemplate="%{y}", textposition="outside", cliponaxis=False)
+        alturas = df.groupby("lob")["ativas"].max()
+        for lname in cats:
+            var = int(ativas.loc[lname, a1] - ativas.loc[lname, a0])
+            fig.add_annotation(
+                x=lname, y=alturas.get(lname, 0) * 1.16,
+                text=f"{var:+d}", showarrow=False,
+                font=dict(size=11, color=INK if var >= 0 else MUTED),
+            )
+        fig.update_yaxes(range=[0, float(alturas.max()) * 1.28])
+        lider = ativas[a1].idxmax()
+        maior_var = (ativas[a1] - ativas[a0]).idxmax()
+        var_max = int((ativas[a1] - ativas[a0]).max())
+        _plot(fig, 330, legend=True,
+              titulo=f"{lider} tem mais concorrentes ativos ({int(ativas.loc[lider, a1])})",
+              sub=f"{maior_var} foi a que mais ganhou concorrentes: {var_max:+d} entre {a0} e {a1}")
         _tab(
-            pd.DataFrame(
-                [
-                    {
-                        "lob": l,
-                        "presenca0": int(ativas_pres.loc[l, a0]),
-                        "ativas0": int(ativas.loc[l, a0]),
-                        "presenca1": int(ativas_pres.loc[l, a1]),
-                        "ativas1": int(ativas.loc[l, a1]),
-                    }
-                    for l in analise.LOB_ORDEM
-                    if l in ativas.index
-                ]
-            ),
-            ["lob", "presenca0", "ativas0", "presenca1", "ativas1"],
-            {},
-            {"lob": "LOB", "presenca0": f"Linhas {a0}", "ativas0": f"Ativas {a0}", "presenca1": f"Linhas {a1}", "ativas1": f"Ativas {a1}"},
+            pd.DataFrame([
+                {
+                    "lob": l,
+                    "ativas0": int(ativas.loc[l, a0]),
+                    "ativas1": int(ativas.loc[l, a1]),
+                    "var": f"{int(ativas.loc[l, a1] - ativas.loc[l, a0]):+d}",
+                }
+                for l in cats
+            ]),
+            ["lob", "ativas0", "ativas1", "var"], {},
+            {"lob": "LOB", "ativas0": f"Ativas {a0}", "ativas1": f"Ativas {a1}", "var": "Variação"},
         )
+        with st.expander("Empresas apenas cadastradas no SES (sem venda no ano)"):
+            _tab(
+                pd.DataFrame([
+                    {"lob": l, "presenca0": int(ativas_pres.loc[l, a0]), "presenca1": int(ativas_pres.loc[l, a1])}
+                    for l in cats
+                ]),
+                ["lob", "presenca0", "presenca1"], {},
+                {"lob": "LOB", "presenca0": f"Linhas {a0}", "presenca1": f"Linhas {a1}"},
+            )
         st.caption(resp[1]["curta"])
 
+    # ---------------- Q7 ----------------
+    cresc = analise.crescimento(base_f)
+    if cresc.empty:
+        st.info("Selecione pelo menos dois anos para calcular crescimento.")
+        return
+    ini_ano, fim_ano = int(cresc["ano_ini"].iloc[0]), int(cresc["ano_fim"].iloc[0])
+    fig = go.Figure()
+    for lname, r in cresc.sort_values("pct").iterrows():
+        cor = analise.LOB_COR.get(lname, PINE)
+        fig.add_trace(go.Scatter(
+            x=[r["primeiro"] / 1e9, r["ultimo"] / 1e9], y=[lname, lname],
+            mode="lines", line=dict(color=cor, width=3), showlegend=False, hoverinfo="skip",
+        ))
+        fig.add_trace(go.Scatter(
+            x=[r["primeiro"] / 1e9], y=[lname], mode="markers",
+            marker=dict(color=cor, size=8, line=dict(color="#FFFFFF", width=1)),
+            showlegend=False,
+            hovertemplate=f"{lname} {ini_ano}: R$ %{{x:.2f}} bi<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=[r["ultimo"] / 1e9], y=[lname], mode="markers+text",
+            marker=dict(color=cor, size=12, line=dict(color="#FFFFFF", width=1)),
+            text=[f"{analise.f_pct(r['pct'])}  |  {analise.f_bi(r['abs'])}"],
+            textposition="middle right", textfont=dict(size=11),
+            showlegend=False,
+            hovertemplate=f"{lname} {fim_ano}: R$ %{{x:.2f}} bi<extra></extra>",
+        ))
+    fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers",
+                             marker=dict(color=MUTED, size=8), name=str(ini_ano)))
+    fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers",
+                             marker=dict(color=INK, size=12), name=str(fim_ano)))
+    _folga_x(fig, list(cresc["primeiro"] / 1e9) + list(cresc["ultimo"] / 1e9), 0.45)
+    pct_top = cresc["pct"].idxmax()
+    abs_top = cresc["abs"].idxmax()
+    _plot(fig, 340, legend=True, xtitle="prêmio ganho, R$ bilhões",
+          titulo=f"{pct_top} cresce mais em %; {abs_top} adiciona mais em reais",
+          sub=f"cada linha liga {ini_ano} a {fim_ano}; rótulo à direita = variação % e valor absoluto")
+    _tab(
+        cresc.reset_index(),
+        ["lob", "primeiro", "ultimo", "abs", "pct", "cagr"],
+        {"primeiro": analise.f_bi, "ultimo": analise.f_bi, "abs": analise.f_bi,
+         "pct": analise.f_pct, "cagr": analise.f_pct},
+        {"lob": "LOB", "primeiro": str(ini_ano), "ultimo": str(fim_ano),
+         "abs": "Variação R$", "pct": "Variação %", "cagr": "CAGR"},
+    )
+    st.caption(resp[6]["curta"])
 
-def _rentabilidade(lob: pd.DataFrame, resp: list[dict]) -> None:
+
+def periodo_de(base_f: pd.DataFrame) -> str:
+    anos = sorted(int(a) for a in base_f["ano"].unique())
+    return f"{anos[0]}–{anos[-1]}" if len(anos) > 1 else str(anos[0])
+
+
+def _rentabilidade(lob: pd.DataFrame, base_f: pd.DataFrame, resp: list[dict]) -> None:
+    # ordem unica para os dois graficos: maior premio no topo
+    ordem = list(lob.sort_values("premio")["lob"])
+    base_lob = lob.set_index("lob")
+
     st.markdown("#### Q5 · resultado técnico por LOB")
-    d = lob.sort_values("lucro").copy()
+    d = base_lob.loc[ordem].reset_index().copy()
     d["lucro_bi"] = d["lucro"] / 1e9
+    d["rotulo"] = d["lucro"].map(analise.f_bi)
     fig = px.bar(
         d, x="lucro_bi", y="lob", orientation="h", color="lob",
-        color_discrete_map=analise.LOB_COR, text=d["lucro_bi"].map(lambda v: f"{v:.2f} bi"),
+        color_discrete_map=analise.LOB_COR, text="rotulo",
+        labels={"lucro_bi": "resultado técnico (R$ bi)", "lob": ""},
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
-    _folga_x(fig, d["lucro_bi"])
-    _plot(fig, 300, xtitle="R$ bilhões", legend=False)
+    _maior_no_topo(fig)
+    _folga_x(fig, d["lucro_bi"], 0.28)
+    top = lob.loc[lob["lucro"].idxmax(), "lob"]
+    _plot(fig, 310, legend=False,
+          titulo=f"{top} gera o maior resultado técnico: {analise.f_bi(lob['lucro'].max())}",
+          sub=f"resultado técnico acumulado, {periodo_de(base_f)}")
     st.caption(resp[4]["curta"])
 
-    st.markdown("#### Q6 · margem por LOB")
-    d = lob.sort_values("margem").copy()
+    st.markdown("#### Q6 · margem e composição do prêmio")
+    d = base_lob.loc[ordem].reset_index().copy()
     fig = px.bar(
         d, x="margem", y="lob", orientation="h", color="lob",
         color_discrete_map=analise.LOB_COR, text=d["margem"].map(analise.f_pct),
+        labels={"margem": "margem", "lob": ""},
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
     fig.update_xaxes(tickformat=".0%")
-    _folga_x(fig, d["margem"])
-    _plot(fig, 300, xtitle="margem", legend=False)
+    _maior_no_topo(fig)
+    _folga_x(fig, d["margem"], 0.30)
+    _plot(fig, 310, legend=False,
+          titulo=f"{base_lob['margem'].idxmax()} tem a maior margem ({analise.f_pct(base_lob['margem'].max())})",
+          sub="margem = resultado técnico ÷ prêmio ganho")
     st.caption(resp[5]["curta"])
 
-    _tab(
-        lob,
-        ["lob", "premio", "lucro", "margem", "sinistralidade"],
-        {"premio": analise.f_bi, "lucro": analise.f_bi, "margem": analise.f_pct, "sinistralidade": analise.f_pct},
-        {"lob": "LOB", "premio": "Prêmio ganho", "lucro": "Resultado técnico", "margem": "Margem", "sinistralidade": "Sinistralidade"},
+    # composicao do premio: 100% empilhado (sinistralidade + resseguro + comissao + margem)
+    comp = {l: analise.componentes(base_f[base_f["lob"] == l]) for l in ordem}
+    dc = pd.DataFrame([
+        {
+            "lob": l,
+            "Sinistralidade": comp[l]["sin"],
+            "Resseguro líquido": comp[l]["resseg"],
+            "Despesa comercial": comp[l]["com"],
+            "Margem": comp[l]["margem"],
+        }
+        for l in ordem
+    ])
+    long = dc.melt(id_vars="lob", var_name="componente", value_name="valor")
+    cores = {
+        "Sinistralidade": "#D9668F",
+        "Resseguro líquido": "#6B72D8",
+        "Despesa comercial": "#B4723A",
+        "Margem": "#2E7D5B",
+    }
+    fig = px.bar(
+        long, x="valor", y="lob", color="componente", orientation="h",
+        color_discrete_map=cores,
+        labels={"valor": "% do prêmio ganho", "lob": "", "componente": ""},
     )
+    fig.update_yaxes(categoryorder="array", categoryarray=ordem)
+    fig.update_xaxes(tickformat=".0%")
+    _plot(fig, 330, legend=True,
+          titulo="De cada R$ 100 de prêmio, quanto vai para sinistro, resseguro, comissão e margem",
+          sub="valores em % do prêmio; resseguro negativo (recuperação maior que o custo) soma a favor")
     st.caption(
         "Resultado técnico = prêmio ganho + receita com resseguro − sinistro ocorrido "
         "− despesa com resseguro − despesa comercial."
     )
 
+    _tab(
+        lob,
+        ["lob", "premio", "lucro", "margem", "sinistralidade"],
+        {"premio": analise.f_bi, "lucro": analise.f_bi, "margem": analise.f_pct,
+         "sinistralidade": analise.f_pct},
+        {"lob": "LOB", "premio": "Prêmio ganho", "lucro": "Resultado técnico",
+         "margem": "Margem", "sinistralidade": "Sinistralidade"},
+    )
+
 
 def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFrame, resp: list[dict]) -> None:
-    st.markdown("#### Q3 · sinistralidade agregada")
-    d = lob.sort_values("sinistralidade", ascending=False).copy()
+    # ---------------- Q3 ----------------
+    d = lob.sort_values("sinistralidade").copy()
     fig = px.bar(
         d, x="sinistralidade", y="lob", orientation="h", color="lob",
         color_discrete_map=analise.LOB_COR, text=d["sinistralidade"].map(analise.f_pct),
+        labels={"sinistralidade": "sinistralidade", "lob": ""},
     )
     fig.update_traces(textposition="outside", cliponaxis=False)
     fig.update_xaxes(tickformat=".0%")
-    _folga_x(fig, d["sinistralidade"])
-    _plot(fig, 300, xtitle="sinistralidade", legend=False)
+    _maior_no_topo(fig)
+    _folga_x(fig, d["sinistralidade"], 0.30)
+    top = lob.loc[lob["sinistralidade"].idxmax(), "lob"]
+    _plot(fig, 310, legend=False,
+          titulo=f"{top} tem a maior sinistralidade: {analise.f_pct(lob['sinistralidade'].max())}",
+          sub=f"sinistro ocorrido ÷ prêmio ganho, {periodo_de(base_f)}")
     st.caption(resp[2]["curta"])
 
-    st.markdown("#### Q9 · tendência anual")
+    # ---------------- Q9: pequenos multiplos ----------------
+    trend = analise.tendencias(base_f).set_index("lob")
+    anos = sorted(int(a) for a in lob_ano["ano"].unique())
+    span = max(anos[-1] - anos[0], 1)
+
+    def rotulo_painel(l: str) -> str:
+        if l not in trend.index or pd.isna(trend.loc[l, "slope"]):
+            return l
+        v = trend.loc[l, "slope"]
+        if abs(v) * span < trend.loc[l, "vol"]:
+            return f"{l} · sem tendência clara"
+        return f"{l} · {'−' if v < 0 else '+'}{abs(v)*100:.1f} pp/ano".replace(".", ",")
+
+    d9 = lob_ano.copy()
+    d9["painel"] = d9["lob"].map(rotulo_painel)
     fig = px.line(
-        lob_ano, x="ano", y="sinistralidade", color="lob", markers=True,
-        color_discrete_map=analise.LOB_COR,
+        d9, x="ano", y="sinistralidade", color="lob", facet_col="painel",
+        facet_col_wrap=3, markers=True, color_discrete_map=analise.LOB_COR,
+        labels={"ano": "", "sinistralidade": "", "lob": ""},
     )
-    fig.update_traces(line=dict(width=2), marker=dict(size=5))
-    fig.update_yaxes(tickformat=".0%")
-    fig.update_xaxes(dtick=1)
-    _plot(fig, 340, ytitle="sinistralidade", legend=True)
+    fig.update_traces(line=dict(width=2), marker=dict(size=4))
+    fig.update_yaxes(matches=None, tickformat=".0%", showticklabels=True)
+    fig.update_xaxes(dtick=max(1, span // 2 if span > 1 else 1))
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1], font=dict(size=12)))
+    fig.update_layout(showlegend=False)
+    melhora = [l for l in trend.index if pd.notna(trend.loc[l, "slope"])
+               and trend.loc[l, "slope"] < -0.005
+               and abs(trend.loc[l, "slope"]) * span >= trend.loc[l, "vol"]]
+    vol_max = trend["vol"].idxmax() if trend["vol"].notna().any() else None
+    pedacos = []
+    if melhora:
+        pedacos.append(f"{', '.join(melhora)} {'melhora' if len(melhora) == 1 else 'melhoram'}")
+    if vol_max is not None:
+        pedacos.append(f"{vol_max} é a mais instável")
+    titulo_q9 = "; ".join(pedacos) if pedacos else "Tendência da sinistralidade por LOB"
+    _plot(fig, 560, legend=False,
+          titulo=titulo_q9,
+          sub="um painel por LOB, escala própria; título do painel = tendência anual")
+
+    _tab(
+        trend.reset_index(),
+        ["lob", "sin_media", "vol", "slope", "cresc_sinistro", "margem_media"],
+        {"sin_media": analise.f_pct, "vol": analise.f_pct,
+         "slope": lambda v: f"{v*100:+.1f} pp/ano".replace(".", ",") if pd.notna(v) else "–",
+         "cresc_sinistro": analise.f_pct, "margem_media": analise.f_pct},
+        {"lob": "LOB", "sin_media": "Média anual", "vol": "Oscilação",
+         "slope": "Tendência", "cresc_sinistro": "Crescimento do sinistro",
+         "margem_media": "Margem média"},
+    )
+
+    # ---------------- Q9: volatilidade ----------------
+    tr = analise.tendencias(base_f).merge(lob[["lob", "premio"]], on="lob", how="left")
+    fig = px.scatter(
+        tr, x="vol", y="sin_media", size="premio", color="lob", text="lob",
+        color_discrete_map=analise.LOB_COR, size_max=45,
+        labels={"vol": "oscilação (desvio-padrão)", "sin_media": "média anual", "lob": ""},
+    )
+    fig.update_traces(textposition="top center", textfont=dict(size=12))
+    xmax, ymax = float(tr["vol"].max()), float(tr["sin_media"].max())
+    xmin, ymin = float(tr["vol"].min()), float(tr["sin_media"].min())
+    fig.update_xaxes(tickformat=".0%", range=[max(0, xmin - xmax * 0.22), xmax * 1.18])
+    fig.update_yaxes(tickformat=".0%", range=[max(0, ymin * 0.55), ymax * 1.24])
+    mx, my = float(tr["vol"].mean()), float(tr["sin_media"].mean())
+    fig.add_vline(x=mx, line_dash="dot", line_color=RULE)
+    fig.add_hline(y=my, line_dash="dot", line_color=RULE)
+    for x, y, txt in [
+        (max(0, xmin - xmax * 0.2), ymax * 1.2, "risco baixo · previsível"),
+        (xmax * 1.14, ymax * 1.2, "risco alto · instável"),
+    ]:
+        fig.add_annotation(x=x, y=y, text=txt, showarrow=False,
+                           font=dict(size=11, color=MUTED), xanchor="left" if x < mx else "right")
+    _plot(fig, 400, legend=False,
+          titulo="Garantia tem o menor risco; RCG é a mais instável",
+          sub="tamanho = prêmio; eixo Y = média simples dos anos (a Q3 usa razão de somas)")
     st.caption(resp[8]["curta"])
 
-    trend = analise.tendencias(base_f)
-    trend = trend.merge(lob[["lob", "premio"]], on="lob", how="left")
-    fig = px.scatter(
-        trend, x="vol", y="sin_media", size="premio", color="lob", text="lob",
-        color_discrete_map=analise.LOB_COR, size_max=45,
-    )
-    fig.update_traces(textposition="top center", textfont=dict(size=11.5))
-    xmax = float(trend["vol"].max() or 0)
-    ymax = float(trend["sin_media"].max() or 0)
-    xmin = float(trend["vol"].min() or 0)
-    fig.update_xaxes(
-        tickformat=".0%",
-        range=[max(0, xmin - xmax * 0.18), xmax * 1.14],
-    )
-    fig.update_yaxes(
-        tickformat=".0%",
-        range=[max(0, float(trend["sin_media"].min() or 0) * 0.6), ymax * 1.22],
-    )
-    _plot(
-        fig, 390,
-        xtitle="volatilidade da sinistralidade (desvio-padrão)",
-        ytitle="sinistralidade média anual",
-        legend=False, topo=56,
-    )
-    _tab(
-        trend,
-        ["lob", "sin_media", "vol", "slope", "cresc_sinistro", "margem_media"],
-        {
-            "sin_media": analise.f_pct, "vol": analise.f_pct,
-            "slope": lambda v: f"{v*100:+.1f} pp/ano".replace(".", ",") if pd.notna(v) else "–",
-            "cresc_sinistro": analise.f_pct, "margem_media": analise.f_pct,
-        },
-        {"lob": "LOB", "sin_media": "Média", "vol": "Volatilidade", "slope": "Tendência", "cresc_sinistro": "Crescimento do sinistro", "margem_media": "Margem média"},
-    )
-
+    # ---------------- Q4 ----------------
     st.markdown("#### Q4 · maior sinistralidade por LOB")
-    thr = st.slider("Share mínimo para entrar no ranking", 0.0, 5.0, 1.0, 0.1) / 100
+    thr = st.slider("Participação mínima no prêmio da LOB", 0.0, 5.0, 1.0, 0.5, format="%.1f%%") / 100
     q4 = analise.q4(base_f, min_share=thr)
     if q4.empty:
         st.info("Sem seguradoras acima do corte.")
     else:
+        _maior = q4.sort_values(["lob", "sinistralidade"], ascending=[True, False]).groupby("lob").head(1)
         _tab(
-            q4,
+            _maior,
             ["lob", "seguradora", "premio", "share", "sinistralidade", "margem"],
-            {"premio": analise.f_mi, "share": analise.f_pct, "sinistralidade": analise.f_pct, "margem": analise.f_pct},
-            {"lob": "LOB", "seguradora": "Seguradora", "premio": "Prêmio", "share": "Share", "sinistralidade": "Sinistralidade", "margem": "Margem"},
+            {"premio": analise.f_mi, "share": analise.f_pct,
+             "sinistralidade": analise.f_pct, "margem": analise.f_pct},
+            {"lob": "LOB", "seguradora": "Maior sinistralidade", "premio": "Prêmio",
+             "share": "Participação", "sinistralidade": "Sinistralidade", "margem": "Margem"},
         )
+        akad_q4 = q4[q4["codigo_susep"] == analise.AKAD]
+        if not akad_q4.empty:
+            partes = ", ".join(
+                f"{r.lob} ({analise.f_pct(r.sinistralidade)})" for r in akad_q4.itertuples()
+            )
+            st.caption(f"A própria Akad aparece entre as maiores sinistralidades em {partes}.")
+        with st.expander("Ver as três maiores de cada LOB"):
+            _tab(
+                q4,
+                ["lob", "seguradora", "premio", "share", "sinistralidade", "margem"],
+                {"premio": analise.f_mi, "share": analise.f_pct,
+                 "sinistralidade": analise.f_pct, "margem": analise.f_pct},
+                {"lob": "LOB", "seguradora": "Seguradora", "premio": "Prêmio",
+                 "share": "Participação", "sinistralidade": "Sinistralidade", "margem": "Margem"},
+            )
         st.caption(respostas_mod.q4_curta(base_f, thr))
-    st.caption("Sinistralidade negativa não é erro: é reversão de reserva. O corte de materialidade evita que empresas minúsculas dominem o ranking.")
+    st.caption("Sinistralidade negativa tipicamente reflete reversão de reserva; o corte de materialidade evita que empresas minúsculas dominem o ranking.")
 
 
 def _concorrencia(base_f: pd.DataFrame, resp: list[dict]) -> None:
@@ -414,146 +594,143 @@ def _concorrencia(base_f: pd.DataFrame, resp: list[dict]) -> None:
     seg = seg.sort_values("premio", ascending=False).reset_index(drop=True)
     seg["rank"] = range(1, len(seg) + 1)
     seg["cum"] = seg["share"].cumsum()
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=seg["rank"], y=seg["cum"], mode="lines+markers", line=dict(color=LILAC, width=2), marker=dict(size=4), name="acumulado"))
-    fig.add_hline(y=0.8, line_dash="dash", line_color=MUTED, annotation_text="80%")
-    fig.update_yaxes(tickformat=".0%")
-    _plot(fig, 280, xtitle="seguradoras ordenadas por prêmio", ytitle="share acumulado", legend=False)
 
-    # --- mapa de posicionamento: só as relevantes, com escala controlada ---
+    # ---------------- Pareto ----------------
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=seg["rank"], y=seg["cum"], mode="lines+markers",
+                             line=dict(color=LILAC, width=2), marker=dict(size=4),
+                             name="share acumulado", hoverinfo="skip"))
+    fig.add_hline(y=0.8, line_dash="dash", line_color=MUTED)
+    fig.add_vline(x=n, line_dash="dot", line_color=RULE)
+    fig.add_annotation(
+        x=n, y=0.8, text=f"{n} seguradoras = 80%",
+        showarrow=True, arrowhead=0, ax=28, ay=-24,
+        font=dict(size=12, color=INK), bgcolor="rgba(255,255,255,0.9)",
+    )
+    fig.update_yaxes(tickformat=".0%", range=[0, 1.04])
+    fig.update_xaxes(range=[0.5, len(seg) + 0.5])
+    top5_total = float(seg["share"].head(5).sum())
+    _plot(fig, 300, xtitle="seguradoras ordenadas por prêmio", ytitle="share acumulado",
+          legend=False,
+          titulo=f"{n} seguradoras fazem 80% do prêmio de {lob_sel}",
+          sub=f"{len(seg)} empresas com prêmio positivo; as 5 maiores somam {analise.f_pct(top5_total, 0)}")
+
+    # ---------------- mapa risco x rentabilidade ----------------
     st.markdown("##### Posicionamento: risco × rentabilidade")
     mostrar_todas = st.checkbox(
         "Incluir as demais seguradoras da LOB (pontos pequenos, sem rótulo)", value=False
     )
-    base_mapa = seg if mostrar_todas else mesa.copy()
-    base_mapa = base_mapa.sort_values("premio", ascending=False).head(24).copy()
-
-    x_lo, x_hi = -0.25, 1.25
-    y_lo, y_hi = -0.70, 0.90
-    base_mapa["x"] = base_mapa["sinistralidade"].clip(x_lo, x_hi)
-    base_mapa["y"] = base_mapa["margem"].clip(y_lo, y_hi)
-    base_mapa["fora"] = (
-        base_mapa["sinistralidade"].ne(base_mapa["x"])
-        | base_mapa["margem"].ne(base_mapa["y"])
-    )
-    rotulados = set(base_mapa.nlargest(6, "premio")["codigo_susep"]) | {analise.AKAD}
+    relevantes_ids = set(mesa["codigo_susep"])
+    base_mapa = (seg if mostrar_todas else mesa.copy()).sort_values("premio", ascending=False).head(24).copy()
+    base_mapa["grupo"] = [
+        "Akad" if c == analise.AKAD else ("Relevantes" if c in relevantes_ids else "Demais")
+        for c in base_mapa["codigo_susep"]
+    ]
     base_mapa["rotulo"] = [
-        analise.nome_curto(n) if c in rotulados else ""
-        for c, n in zip(base_mapa["codigo_susep"], base_mapa["seguradora"])
+        analise.nome_curto(nm) if (c == analise.AKAD or c in set(base_mapa.nlargest(5, "premio")["codigo_susep"])) else ""
+        for c, nm in zip(base_mapa["codigo_susep"], base_mapa["seguradora"])
     ]
 
+    # escala: ajustada aos pontos visíveis, com 10% de folga
+    xmin, xmax = float(base_mapa["sinistralidade"].min()), float(base_mapa["sinistralidade"].max())
+    ymin, ymax = float(base_mapa["margem"].min()), float(base_mapa["margem"].max())
+    fx = (xmax - xmin) * 0.12 or 0.05
+    fy = (ymax - ymin) * 0.18 or 0.05
+    x_lo, x_hi = xmin - fx, xmax + fx
+    y_lo, y_hi = ymin - fy, ymax + fy
+    if not mostrar_todas:
+        x_lo, x_hi = max(x_lo, 0.0), max(x_hi, 0.1)
+        y_lo = max(y_lo, -0.05)
+
+    base_mapa["x"] = base_mapa["sinistralidade"].clip(x_lo, x_hi)
+    base_mapa["y"] = base_mapa["margem"].clip(y_lo, y_hi)
+    base_mapa["fora"] = (base_mapa["sinistralidade"].ne(base_mapa["x"])
+                         | base_mapa["margem"].ne(base_mapa["y"]))
+
+    cores_grupo = {"Akad": analise.COR_AKAD, "Relevantes": LILAC, "Demais": NEGATIVO}
     fig = px.scatter(
-        base_mapa,
-        x="x",
-        y="y",
-        size="premio",
-        color="share",
-        text="rotulo",
-        hover_name="seguradora",
-        color_continuous_scale=["#F4F5FD", LILAC],
-        size_max=38,
-        custom_data=[
-            "premio", "share", "sinistralidade", "margem", "fora",
-        ],
+        base_mapa, x="x", y="y", size="premio", color="grupo", text="rotulo",
+        hover_name="seguradora", color_discrete_map=cores_grupo, size_max=40,
+        labels={"x": "sinistralidade", "y": "margem", "grupo": ""},
+        custom_data=["premio", "share", "sinistralidade", "margem"],
     )
+    posicoes = ["top center" if i % 2 == 0 else "bottom center" for i in range(len(base_mapa))]
     fig.update_traces(
-        textposition="top center",
-        textfont=dict(size=10.5, color=INK),
+        textposition=posicoes,
+        textfont=dict(size=11, color=INK),
         marker=dict(line=dict(width=1, color="#FFFFFF")),
         hovertemplate=(
-            "<b>%{hovertext}</b><br>"
-            "prêmio R$ %{customdata[0]:,.0f}<br>"
-            "share %{customdata[1]:.1%}<br>"
-            "sinistralidade %{customdata[2]:.1%}<br>"
-            "margem %{customdata[3]:.1%}"
-            "<extra></extra>"
+            "<b>%{hovertext}</b><br>prêmio R$ %{customdata[0]:,.0f}<br>"
+            "participação %{customdata[1]:.1%}<br>sinistralidade %{customdata[2]:.1%}<br>"
+            "margem %{customdata[3]:.1%}<extra></extra>"
         ),
     )
-
-    # quadrantes nomeados
     xm, ym = mercado["sinistralidade"], mercado["margem"]
     fig.add_vline(x=xm, line_dash="dash", line_color=MUTED, line_width=1)
     fig.add_hline(y=ym, line_dash="dash", line_color=MUTED, line_width=1)
-    for x, y, txt, cor in [
-        (x_lo + 0.03, y_hi - 0.06, "risco baixo · margem alta", "#2E7D5B"),
-        (x_hi - 0.03, y_hi - 0.06, "risco alto · margem alta", "#B4723A"),
-        (x_lo + 0.03, y_lo + 0.04, "risco baixo · margem baixa", "#9AA0B5"),
-        (x_hi - 0.03, y_lo + 0.04, "risco alto · margem baixa", "#C8451F"),
-    ]:
-        fig.add_annotation(
-            x=x, y=y, text=txt, showarrow=False,
-            font=dict(size=10, color=cor), opacity=0.85,
-            xanchor="left" if x < 0 else "right",
-            yanchor="top" if y > 0 else "bottom",
-        )
-
-    # Akad em destaque
-    if destaques:
-        marcados = base_mapa[base_mapa["codigo_susep"].isin(destaques)]
-        if not marcados.empty:
-            fig.add_trace(
-                go.Scatter(
-                    x=marcados["x"], y=marcados["y"], mode="markers",
-                    marker=dict(symbol="circle-open", size=26, color="#143057",
-                                line=dict(width=2.5)),
-                    name="busca", hoverinfo="skip", showlegend=False,
-                )
-            )
-
-    ak = base_mapa[base_mapa["codigo_susep"] == analise.AKAD]
-    if not ak.empty:
-        fig.add_trace(
-            go.Scatter(
-                x=ak["x"], y=ak["y"], mode="markers",
-                marker=dict(symbol="star", size=20, color=analise.COR_AKAD,
-                            line=dict(width=1.5, color="#FFFFFF")),
-                name="Akad", hoverinfo="skip", showlegend=False,
-            )
-        )
-
-    fig.update_xaxes(tickformat=".0%", range=[x_lo - 0.03, x_hi + 0.03])
-    fig.update_yaxes(tickformat=".0%", range=[y_lo - 0.03, y_hi + 0.03])
-    _plot(fig, 400, xtitle="sinistralidade", ytitle="margem", legend=False)
-    st.caption(
-        "Cada ponto é uma seguradora: tamanho = prêmio, cor = share. "
-        "As linhas tracejadas marcam a média do mercado da LOB; o quadrante superior esquerdo "
-        "é o melhor (menos sinistro, mais margem). Só entram as relevantes (top 80%) e os rótulos "
-        "ficam nas seis maiores e na Akad; passe o mouse para ver todas."
-    )
+    fig.add_annotation(x=x_lo, y=y_hi, text="risco baixo · margem alta", showarrow=False,
+                       font=dict(size=11.5, color="#2E7D5B"), xanchor="left", yanchor="top")
+    fig.add_annotation(x=x_hi, y=y_lo, text="risco alto · margem baixa", showarrow=False,
+                       font=dict(size=11.5, color="#C8451F"), xanchor="right", yanchor="bottom")
+    fig.update_xaxes(tickformat=".0%", range=[x_lo, x_hi])
+    fig.update_yaxes(tickformat=".0%", range=[y_lo, y_hi])
+    _plot(fig, 420, legend=True,
+          titulo=f"Em {lob_sel}, quem combina menos sinistro com mais margem",
+          sub="linhas tracejadas = média do mercado; tamanho = prêmio; rótulo nas 5 maiores e na Akad")
     if base_mapa["fora"].any():
-        fora = base_mapa[base_mapa["fora"]][["seguradora", "sinistralidade", "margem"]]
+        fora = base_mapa[base_mapa["fora"]]
         nomes = "; ".join(
             f"{analise.nome_curto(r.seguradora)} ({analise.f_pct(r.sinistralidade)} / {analise.f_pct(r.margem)})"
-            for r in fora.head(6).itertuples()
+            for r in fora.head(4).itertuples()
         )
-        resto = "" if len(fora) <= 6 else f"; e mais {len(fora) - 6}"
-        st.caption(f"Fora da escala, presos na borda (sinistralidade / margem): {nomes}{resto}.")
+        st.caption(f"Fora da escala, presos na borda (sinistralidade / margem): {nomes}.")
+
+    # ---------------- margem contra o mercado, por relevante ----------------
+    d = mesa.sort_values("delta_margem").copy()
+    d["sinal"] = d["delta_margem"].map(lambda v: "acima do mercado" if v >= 0 else "abaixo do mercado")
+    fig = px.bar(
+        d, x="delta_margem", y="seguradora", orientation="h", color="sinal",
+        color_discrete_map={"acima do mercado": "#2E7D5B", "abaixo do mercado": "#C8451F"},
+        text=d["delta_margem"].map(lambda v: f"{v*100:+.1f} pp".replace(".", ",")),
+        labels={"delta_margem": "margem menos a do mercado (pp)", "seguradora": "", "sinal": ""},
+    )
+    fig.update_traces(textposition="outside", cliponaxis=False, textfont=dict(size=10.5))
+    fig.add_vline(x=0, line_color=MUTED)
+    _folga_x(fig, d["delta_margem"], 0.35)
+    _plot(fig, max(320, 26 * len(d)), legend=False,
+          titulo=f"Quem ganha e quem perde margem contra o mercado em {lob_sel}",
+          sub="diferença em pontos percentuais; barra à direita = margem acima da média da LOB")
     st.caption(resp[7]["curta"])
 
 
 def _akad(base_f: pd.DataFrame, resp: list[dict]) -> None:
+    anos = sorted(int(a) for a in base_f["ano"].unique())
+    ano_a, ano_b = anos[0], anos[-1]
+
+    # ---------------- Q10 ----------------
     st.markdown("#### Q10 · posição da Akad")
     st.caption(
-        "2020–2021: operação Argo (a compra pela GP é de 2021). 2022 em diante: Akad Seguros (marca de junho de 2022). "
-        "A série de seis anos mistura as duas fases; a leitura de posição da Akad deve priorizar 2022–2025."
+        "2020–2021: operação Argo. 2022 em diante: Akad Seguros (marca de junho de 2022). "
+        "A série é contínua porque o código SUSEP 02798 não muda."
     )
-    anos = sorted(base_f["ano"].unique())
-    ano_a, ano_b = int(anos[0]), int(anos[-1])
     akad = analise.akad_tabela(base_f)
+    tab = akad.copy()
+    tab["cresc"] = tab.apply(
+        lambda r: f"×{r['premio1']/r['premio0']:.1f}".replace(".", ",") if r["premio0"] > 0 else "–",
+        axis=1,
+    )
     _tab(
-        akad,
+        tab,
         ["lob", "premio0", "premio1", "share0", "share1", "rank0", "rank1", "cresc"],
-        {
-            "premio0": analise.f_bi, "premio1": analise.f_bi,
-            "share0": analise.f_pct, "share1": analise.f_pct,
-            "rank0": lambda v: f"{int(v)}º" if pd.notna(v) else "–",
-            "rank1": lambda v: f"{int(v)}º" if pd.notna(v) else "–",
-            "cresc": analise.f_pct,
-        },
-        {"lob": "LOB", "premio0": f"Prêmio {ano_a}", "premio1": f"Prêmio {ano_b}", "share0": f"Share {ano_a}", "share1": f"Share {ano_b}", "rank0": f"Posição {ano_a}", "rank1": f"Posição {ano_b}", "cresc": "Crescimento"},
+        {"premio0": analise.f_mi, "premio1": analise.f_mi,
+         "share0": analise.f_pct, "share1": analise.f_pct,
+         "rank0": lambda v: f"{int(v)}ª" if pd.notna(v) else "–",
+         "rank1": lambda v: f"{int(v)}ª" if pd.notna(v) else "–"},
+        {"lob": "LOB", "premio0": f"Prêmio {ano_a}", "premio1": f"Prêmio {ano_b}",
+         "share0": f"Participação {ano_a}", "share1": f"Participação {ano_b}",
+         "rank0": f"Posição {ano_a}", "rank1": f"Posição {ano_b}", "cresc": "Crescimento"},
     )
 
-    anos = sorted(base_f["ano"].unique())
     linhas = []
     for lname in analise.LOB_ORDEM:
         for ano in anos:
@@ -565,56 +742,159 @@ def _akad(base_f: pd.DataFrame, resp: list[dict]) -> None:
             linhas.append({"lob": lname, "ano": ano, "share": ak / total if total > 0 else 0})
     df = pd.DataFrame(linhas)
     if not df.empty:
-        fig = px.line(df, x="ano", y="share", color="lob", markers=True, color_discrete_map=analise.LOB_COR)
-        fig.update_traces(line=dict(width=2), marker=dict(size=5))
-        fig.update_yaxes(tickformat=".0%")
-        fig.update_xaxes(dtick=1)
-        _plot(fig, 320, ytitle="share da Akad", legend=True)
+        fig = px.line(
+            df, x="ano", y="share", color="lob", facet_col="lob", facet_col_wrap=3,
+            markers=True, color_discrete_map=analise.LOB_COR,
+            labels={"ano": "", "share": "", "lob": ""},
+        )
+        fig.update_traces(line=dict(width=2), marker=dict(size=4))
+        fig.update_yaxes(matches=None, tickformat=".0%", showticklabels=True)
+        fig.update_xaxes(dtick=max(1, (ano_b - ano_a) // 2))
+        fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1], font=dict(size=12)))
+        fig.update_layout(showlegend=False)
+        if 2022 in anos:
+            fig.add_vrect(x0=ano_a - 0.4, x1=2021.5, fillcolor="#9AA0B5", opacity=0.10, line_width=0)
+            fig.add_vline(x=2022, line_dash="dash", line_color=MUTED, line_width=1)
+        ganhou = []
+        for lname, g in df.groupby("lob"):
+            g = g.sort_values("ano")
+            if len(g) >= 2 and g["share"].iloc[-1] > g["share"].iloc[0] + 0.005:
+                ganhou.append(lname)
+        titulo_share = (
+            f"A Akad ganhou participação em {', '.join(ganhou)}"
+            if ganhou else "Participação da Akad por LOB e ano"
+        )
+        _plot(fig, 480, legend=False,
+              titulo=titulo_share,
+              sub="um painel por LOB, escala própria; faixa cinza = fase Argo; linha vertical = 2022 (marca Akad)")
     st.caption(resp[9]["curta"])
 
+    # ---------------- grafico-chave: Transportes ----------------
+    st.markdown("##### A história de Transportes: prêmio cresce, margem desaparece")
+    tr = base_f[base_f["lob"] == "Transportes"]
+    if not tr.empty:
+        linhas = []
+        for ano in anos:
+            g = tr[tr["ano"] == ano]
+            a = g[g["codigo_susep"] == analise.AKAD]
+            m = g[g["codigo_susep"] != analise.AKAD]
+            if a.empty or m.empty:
+                continue
+            ma, mm = analise.metricas(a), analise.metricas(m)
+            linhas.append({"ano": ano, "serie": "Akad · margem", "valor": ma["margem"]})
+            linhas.append({"ano": ano, "serie": "Concorrentes · margem", "valor": mm["margem"]})
+            linhas.append({"ano": ano, "serie": "Akad · sinistralidade", "valor": ma["sinistralidade"]})
+            linhas.append({"ano": ano, "serie": "Concorrentes · sinistralidade", "valor": mm["sinistralidade"]})
+        dt = pd.DataFrame(linhas)
+        if not dt.empty:
+            fig = px.line(
+                dt, x="ano", y="valor", color="serie", markers=True,
+                color_discrete_map={
+                    "Akad · margem": analise.COR_AKAD,
+                    "Concorrentes · margem": "#D9A6B8",
+                    "Akad · sinistralidade": NAVY,
+                    "Concorrentes · sinistralidade": NEGATIVO,
+                },
+                labels={"ano": "", "valor": "", "serie": ""},
+            )
+            fig.update_traces(line=dict(width=2.2), marker=dict(size=5))
+            fig.update_yaxes(tickformat=".0%")
+            fig.update_xaxes(dtick=max(1, (ano_b - ano_a) // 2))
+            ak_mg = dt[dt["serie"] == "Akad · margem"].sort_values("ano")["valor"]
+            ini_txt = analise.f_pct(ak_mg.iloc[0]) if not ak_mg.empty else "–"
+            fim_txt = analise.f_pct(ak_mg.iloc[-1]) if not ak_mg.empty else "–"
+            _plot(fig, 360, legend=True,
+                  titulo=f"Em Transportes, a margem da Akad caiu de {ini_txt} para {fim_txt}",
+                  sub="margem e sinistralidade, Akad contra os concorrentes (mercado sem a Akad)")
+    st.caption("É a principal história do case: escala cresceu, rentabilidade não.")
+
+    # ---------------- Q11 ----------------
     st.markdown("#### Q11 · Akad contra mercado, pares e relevantes")
-    comp = analise.comparacao_akad(base_f)
+    ref = base_f[base_f["ano"] >= 2022] if (base_f["ano"] >= 2022).any() else base_f
+    rot_ref = f"{int(ref['ano'].min())}–{int(ref['ano'].max())}"
+    comp = analise.comparacao_akad(ref)
+    if comp.empty:
+        st.info("A Akad não aparece nas LOBs selecionadas.")
+        return
     comp["delta_mg"] = comp["akad_mg"] - comp["mercado_mg"]
-    _tab(
-        comp,
-        [
-            "lob", "akad_mg", "mercado_mg", "peers_mg", "relev_mg",
-            "akad_sin", "mercado_sin", "peers_sin", "relev_sin", "peers_n", "relev_n",
-        ],
-        {
-            "akad_mg": analise.f_pct, "mercado_mg": analise.f_pct,
-            "peers_mg": analise.f_pct, "relev_mg": analise.f_pct,
-            "akad_sin": analise.f_pct, "mercado_sin": analise.f_pct,
-            "peers_sin": analise.f_pct, "relev_sin": analise.f_pct,
-        },
-        {
-            "lob": "LOB", "akad_mg": "Margem Akad", "mercado_mg": "Margem mercado",
-            "peers_mg": "Margem pares", "relev_mg": "Margem relevantes",
-            "akad_sin": "Sinistr. Akad", "mercado_sin": "Sinistr. mercado",
-            "peers_sin": "Sinistr. pares", "relev_sin": "Sinistr. relevantes",
-            "peers_n": "Nº pares", "relev_n": "Nº relevantes",
-        },
+
+    # margem: Akad x mercado x pares x relevantes
+    dm = comp.melt(
+        id_vars="lob",
+        value_vars=["akad_mg", "mercado_mg", "peers_mg", "relev_mg"],
+        var_name="serie", value_name="valor",
     )
-    comp = comp.sort_values("delta_mg").copy()
-    comp["sinal"] = comp["delta_mg"].map(lambda v: "melhor que o mercado" if v > 0 else "pior que o mercado")
+    dm["serie"] = dm["serie"].map({
+        "akad_mg": "Akad", "mercado_mg": "Mercado",
+        "peers_mg": "Pares", "relev_mg": "Relevantes",
+    })
     fig = px.bar(
-        comp, x="delta_mg", y="lob", orientation="h", color="sinal",
-        color_discrete_map={"melhor que o mercado": PINE, "pior que o mercado": NEGATIVO},
-        text=comp["delta_mg"].map(lambda v: f"{v*100:+.1f} pp".replace(".", ",")),
+        dm, x="lob", y="valor", color="serie", barmode="group",
+        color_discrete_map={"Akad": analise.COR_AKAD, "Mercado": NAVY,
+                            "Pares": LILAC, "Relevantes": NEGATIVO},
+        text=dm["valor"].map(analise.f_pct),
+        labels={"lob": "", "valor": "margem", "serie": ""},
     )
-    fig.update_traces(textposition="outside", cliponaxis=False)
-    fig.add_vline(x=0, line_color=MUTED)
-    fig.update_xaxes(tickformat=".0%")
-    _folga_x(fig, comp["delta_mg"])
-    _plot(fig, 300, xtitle="margem da Akad − margem do mercado", legend=False)
-    st.caption("O gráfico mostra a margem; a tabela acima traz pares e relevantes também em sinistralidade.")
+    fig.update_traces(textposition="outside", cliponaxis=False, textfont=dict(size=9.5))
+    fig.update_yaxes(tickformat=".0%")
+    ganha_mg = [r.lob for r in comp.itertuples() if r.akad_mg > r.mercado_mg]
+    titulo_mg = (
+        f"Margem: a Akad ganha do mercado em {', '.join(ganha_mg)} ({rot_ref})"
+        if ganha_mg else f"Margem: a Akad fica abaixo do mercado ({rot_ref})"
+    )
+    _plot(fig, 360, legend=True,
+          titulo=titulo_mg,
+          sub="Akad contra mercado, pares de porte e seguradoras relevantes")
+
+    # sinistralidade: as mesmas quatro referencias
+    ds = comp.melt(
+        id_vars="lob",
+        value_vars=["akad_sin", "mercado_sin", "peers_sin", "relev_sin"],
+        var_name="serie", value_name="valor",
+    )
+    ds["serie"] = ds["serie"].map({
+        "akad_sin": "Akad", "mercado_sin": "Mercado",
+        "peers_sin": "Pares", "relev_sin": "Relevantes",
+    })
+    fig = px.bar(
+        ds, x="lob", y="valor", color="serie", barmode="group",
+        color_discrete_map={"Akad": analise.COR_AKAD, "Mercado": NAVY,
+                            "Pares": LILAC, "Relevantes": NEGATIVO},
+        text=ds["valor"].map(analise.f_pct),
+        labels={"lob": "", "valor": "sinistralidade", "serie": ""},
+    )
+    fig.update_traces(textposition="outside", cliponaxis=False, textfont=dict(size=9.5))
+    fig.update_yaxes(tickformat=".0%")
+    ganha_sin = [r.lob for r in comp.itertuples() if r.akad_sin < r.mercado_sin - 0.01]
+    empata_sin = [r.lob for r in comp.itertuples() if abs(r.akad_sin - r.mercado_sin) <= 0.01]
+    partes_sin = []
+    if ganha_sin:
+        partes_sin.append(f"ganha em {', '.join(ganha_sin)}")
+    if empata_sin:
+        partes_sin.append(f"empata em {', '.join(empata_sin)}")
+    titulo_sin = ("Sinistralidade: a Akad " + " e ".join(partes_sin) + f" ({rot_ref})"
+                  if partes_sin else f"Sinistralidade da Akad contra as referências ({rot_ref})")
+    _plot(fig, 360, legend=True,
+          titulo=titulo_sin,
+          sub="mesma comparação; barra mais baixa é melhor")
+
+    _tab(
+        comp.reset_index() if "lob" not in comp.columns else comp,
+        ["lob", "akad_mg", "mercado_mg", "peers_mg", "relev_mg",
+         "akad_sin", "mercado_sin", "peers_sin", "relev_sin", "peers_n", "relev_n"],
+        {"akad_mg": analise.f_pct, "mercado_mg": analise.f_pct,
+         "peers_mg": analise.f_pct, "relev_mg": analise.f_pct,
+         "akad_sin": analise.f_pct, "mercado_sin": analise.f_pct,
+         "peers_sin": analise.f_pct, "relev_sin": analise.f_pct},
+        {"lob": "LOB", "akad_mg": "Margem Akad", "mercado_mg": "Mercado",
+         "peers_mg": "Pares", "relev_mg": "Relevantes",
+         "akad_sin": "Sinistr. Akad", "mercado_sin": "Mercado",
+         "peers_sin": "Pares", "relev_sin": "Relevantes",
+         "peers_n": "Nº pares", "relev_n": "Nº relevantes"},
+    )
     st.caption(resp[10]["curta"])
 
-    # de onde vem a diferença de margem (fase Akad, quando existe)
-    ref = base_f[base_f["ano"] >= 2022]
-    ref = ref if not ref.empty else base_f
-    anos_ref = sorted(int(a) for a in ref["ano"].unique())
-    rot_ref = f"{anos_ref[0]}–{anos_ref[-1]}" if len(anos_ref) > 1 else str(anos_ref[0])
+    # de onde vem a diferenca de margem
     linhas = []
     for lname in analise.LOB_ORDEM:
         g = ref[ref["lob"] == lname]
@@ -622,22 +902,147 @@ def _akad(base_f: pd.DataFrame, resp: list[dict]) -> None:
         if g.empty or a.empty:
             continue
         ca, cm = analise.componentes(a), analise.componentes(g)
+        total = sum(-(ca[k] - cm[k]) for k in ("sin", "resseg", "com"))
         for chave, nome in (("sin", "Sinistralidade"), ("resseg", "Resseguro líquido"), ("com", "Despesa comercial")):
             linhas.append({"lob": lname, "componente": nome, "pp": -(ca[chave] - cm[chave]) * 100})
+        linhas.append({"lob": lname, "componente": "Diferença total", "pp": total * 100})
     if linhas:
-        st.markdown(f"##### De onde vem a diferença de margem ({rot_ref})")
         dd = pd.DataFrame(linhas)
+        st.markdown(f"##### De onde vem a diferença de margem ({rot_ref})")
+        componentes = dd[dd["componente"] != "Diferença total"]
         fig = px.bar(
-            dd, x="pp", y="lob", color="componente", orientation="h", barmode="relative",
-            color_discrete_map={"Sinistralidade": PINE, "Resseguro líquido": LILAC, "Despesa comercial": PINK},
-            category_orders={"lob": list(reversed([l for l in analise.LOB_ORDEM if l in set(dd["lob"])]))},
+            componentes, x="pp", y="lob", color="componente", orientation="h", barmode="relative",
+            color_discrete_map={"Sinistralidade": "#D9668F", "Resseguro líquido": LILAC,
+                                "Despesa comercial": "#B4723A"},
+            labels={"pp": "contribuição (pp)", "lob": "", "componente": ""},
         )
         fig.add_vline(x=0, line_color=MUTED)
-        _plot(fig, 320, xtitle="contribuição para (margem Akad − margem mercado), em pontos percentuais; positivo ajuda a Akad", legend=True)
+        fig.update_layout(legend=dict(orientation="h", y=-0.18, x=0))
+        totais = dd[dd["componente"] == "Diferença total"].set_index("lob")["pp"]
+        for lname, v in totais.items():
+            fig.add_annotation(x=v, y=lname, text=f"{v:+.1f} pp".replace(".", ","),
+                               showarrow=False, xanchor="left" if v >= 0 else "right",
+                               font=dict(size=11, color=INK))
+        resseg = componentes[componentes["componente"] == "Resseguro líquido"]
+        if not resseg.empty:
+            melhor = resseg.loc[resseg["pp"].idxmax()]
+            titulo_dec = (
+                f"Resseguro responde por {melhor['pp']:+.1f} pp da vantagem de {melhor['lob']}".replace(".", ",")
+                if melhor["pp"] > 0 else "De onde vem a diferença de margem"
+            )
+        else:
+            titulo_dec = "De onde vem a diferença de margem"
+        _plot(fig, 340, legend=True,
+              titulo=titulo_dec,
+              sub="contribuição de cada componente para (margem Akad − mercado); positivo ajuda a Akad")
         st.caption(
-            "Resseguro líquido = despesa − receita com resseguro. Contribuição positiva em resseguro significa "
-            "que a Akad cede menos risco que o mercado: mais margem nos anos bons, mas mais capital e volatilidade retidos."
+            "Resseguro líquido = despesa − receita com resseguro. Contribuição positiva significa que a "
+            "Akad cede menos risco que o mercado: mais margem nos anos bons, mais capital e volatilidade retidos."
         )
+
+
+def _recomendacao(base_f: pd.DataFrame, resp: list[dict]) -> None:
+    """Q12: matriz strategica e barra de impacto, com numeros da base."""
+    st.markdown("#### Q12 · onde focar nos próximos anos")
+    fase = base_f[base_f["ano"] >= 2022] if (base_f["ano"] >= 2022).any() else base_f
+    rot = f"{int(fase['ano'].min())}–{int(fase['ano'].max())}"
+    f1 = int(fase["ano"].max())
+
+    dados = []
+    for l in analise.LOB_ORDEM:
+        g = fase[fase["lob"] == l]
+        a = g[g["codigo_susep"] == analise.AKAD]
+        if a.empty:
+            continue
+        m = g[g["codigo_susep"] != analise.AKAD]
+        ma, mm = analise.metricas(a), analise.metricas(m if not m.empty else g)
+        tot_f1 = float(base_f[(base_f["lob"] == l) & (base_f["ano"] == f1)]["premio_ganho"].sum())
+        ak_f1 = float(base_f[(base_f["lob"] == l) & (base_f["ano"] == f1) & (base_f["codigo_susep"] == analise.AKAD)]["premio_ganho"].sum())
+        papel, acao = respostas_mod.PAPEL.get(l, ("–", "–"))
+        dados.append({
+            "lob": l,
+            "share": ak_f1 / tot_f1 if tot_f1 else 0,
+            "mg_a": ma["margem"],
+            "mg_m": mm["margem"],
+            "gap": ma["margem"] - mm["margem"],
+            "premio": ma["premio"],
+            "lucro": ma["lucro"],
+            "papel": papel,
+            "acao": acao,
+        })
+    if not dados:
+        st.info("A Akad não aparece nas LOBs selecionadas.")
+        return
+    dd = pd.DataFrame(dados)
+
+    cores = {"Núcleo": analise.COR_AKAD, "Corrigir": "#C8451F",
+             "Aposta seletiva": LILAC, "Opcional": NEGATIVO}
+    fig = px.scatter(
+        dd, x="share", y="gap", size="premio", color="papel", text="lob",
+        color_discrete_map=cores, size_max=50,
+        labels={"share": "participação da Akad na LOB", "gap": "margem da Akad − concorrentes (pp)",
+                "papel": ""},
+        custom_data=["mg_a", "mg_m", "lucro", "papel"],
+    )
+    fig.update_traces(
+        textposition="top center", textfont=dict(size=12),
+        hovertemplate=(
+            "<b>%{text}</b><br>participação %{x:.1%}<br>"
+            "margem Akad %{customdata[0]:.1%} vs %{customdata[1]:.1%}<br>"
+            "lucro %{customdata[2]:,.0f}<br>%{customdata[3]}<extra></extra>"
+        ),
+    )
+    fig.add_hline(y=0, line_color=MUTED, line_width=1)
+    fig.add_vline(x=0.05, line_dash="dash", line_color=RULE)
+    fig.add_annotation(x=0.052, y=float(dd["gap"].max()), text="5% de participação",
+                       showarrow=False, font=dict(size=10.5, color=MUTED), xanchor="left", yanchor="top")
+    fig.update_xaxes(tickformat=".0%")
+    fig.update_yaxes(tickformat="+.0f", ticksuffix=" pp")
+    prioridade = [r.lob for r in dd.itertuples() if r.share >= 0.02 and r.gap > 0]
+    titulo_mat = (
+        f"{', '.join(prioridade)}: participação relevante e margem acima dos concorrentes"
+        if prioridade else "Participação e margem da Akad por LOB"
+    )
+    _plot(fig, 420, legend=True,
+          titulo=titulo_mat,
+          sub=f"fase Akad ({rot}); tamanho = prêmio; acima da linha = margem melhor que os concorrentes")
+
+    # impacto de Transportes na margem dos concorrentes
+    tr = dd[dd["lob"] == "Transportes"]
+    eo = dd[dd["lob"] == "E&O"]
+    if not tr.empty:
+        t = tr.iloc[0]
+        impacto = (t["mg_m"] - t["mg_a"]) * t["premio"]
+        barras = [("Transportes na margem dos concorrentes", impacto, "#2E7D5B")]
+        if not eo.empty:
+            barras.append(("Lucro de E&O na fase Akad", float(eo.iloc[0]["lucro"]), analise.LOB_COR["E&O"]))
+        fig = go.Figure(go.Bar(
+            x=[b[1] for b in barras], y=[b[0] for b in barras], orientation="h",
+            marker_color=[b[2] for b in barras],
+            text=[analise.f_din(b[1]) for b in barras], textposition="outside",
+        ))
+        fig.update_xaxes(tickformat=",.0f", range=[0, max(b[1] for b in barras) * 1.25])
+        fig.update_yaxes(title=None)
+        _plot(fig, 240, legend=False, xtitle="R$",
+              titulo=f"Corrigir Transportes vale {analise.f_din(impacto)} — mais que todo o lucro de E&O",
+              sub=f"se Transportes tivesse a margem dos concorrentes ({analise.f_pct(t['mg_m'])}) sobre o prêmio da fase")
+
+    st.markdown("##### Papel de cada LOB")
+    _tab(
+        dd.sort_values("papel"),
+        ["lob", "papel", "acao", "share", "mg_a", "mg_m", "gap", "lucro"],
+        {"share": analise.f_pct, "mg_a": analise.f_pct, "mg_m": analise.f_pct,
+         "gap": lambda v: f"{v*100:+.1f} pp".replace(".", ","), "lucro": analise.f_din},
+        {"lob": "LOB", "papel": "Papel", "acao": "Ação", "share": "Participação",
+         "mg_a": "Margem Akad", "mg_m": "Margem concorrentes", "gap": "Diferença",
+         "lucro": "Lucro na fase"},
+    )
+    st.caption(
+        "O papel de cada LOB é opinião apoiada nos números; precisa ser validado com dados internos de "
+        "preço, comissão e resseguro. Gatilho de revisão: se a sinistralidade de E&O voltar acima de 45%, "
+        "rever a retenção de risco."
+    )
+    st.caption(resp[11]["curta"])
 
 
 def _respostas(resp: list[dict]) -> None:
@@ -732,7 +1137,7 @@ def _dados(base: pd.DataFrame) -> None:
     st.dataframe(
         visao,
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         height=460,
         column_config={
             "lob": st.column_config.TextColumn("LOB", width="small"),
@@ -805,20 +1210,23 @@ def render() -> None:
     lob_ano = analise.por_lob_ano(base_f)
     resp = analise.respostas(base_f)
 
-    tab_visao, tab_mercado, tab_rent, tab_sin, tab_conc, tab_akad, tab_resp = st.tabs(
-        ["Visão geral", "Mercado", "Rentabilidade", "Sinistralidade", "Concorrência", "Akad", "Respostas"]
+    tab_visao, tab_mercado, tab_rent, tab_sin, tab_conc, tab_akad, tab_rec, tab_resp = st.tabs(
+        ["Visão geral", "Mercado", "Rentabilidade", "Sinistralidade", "Concorrência",
+         "Akad", "Recomendação", "Respostas"]
     )
     with tab_visao:
         _visao(lob, lob_ano, base_f, resp)
     with tab_mercado:
         _mercado(lob, base_f, resp)
     with tab_rent:
-        _rentabilidade(lob, resp)
+        _rentabilidade(lob, base_f, resp)
     with tab_sin:
         _sinistralidade(lob, lob_ano, base_f, resp)
     with tab_conc:
         _concorrencia(base_f, resp)
     with tab_akad:
         _akad(base_f, resp)
+    with tab_rec:
+        _recomendacao(base_f, resp)
     with tab_resp:
         _respostas(resp)

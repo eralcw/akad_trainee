@@ -82,3 +82,36 @@ def test_nome_curto():
     assert A.nome_curto("TOKIO MARINE SEGURADORA S.A.") == "Tokio Marine"
     assert A.nome_curto("BTG PACTUAL SEGUROS S.A.") == "BTG Pactual"
     assert A.nome_curto("PORTO SEGURO COMPANHIA DE SEGUROS GERAIS") == "Porto"
+
+
+def test_perguntas_literais_do_pdf(base):
+    for q in R.gerar(base):
+        assert q["pergunta"] == R.PERGUNTAS[q["n"]]
+
+
+def test_sem_exclamacao(base):
+    for q in R.gerar(base):
+        assert "!" not in q["resposta"] and "!" not in q["curta"]
+
+
+def test_curta_concisa(base):
+    for q in R.gerar(base):
+        assert len(q["curta"].split()) <= 40, (q["n"], len(q["curta"].split()))
+
+
+def test_filtro_uma_lob_nao_quebra(base):
+    for lob in base["lob"].unique():
+        assert len(R.gerar(base[base["lob"] == lob])) == 12
+
+
+def test_filtro_um_ano_nao_quebra(base):
+    ano = int(base["ano"].max())
+    assert len(R.gerar(base[base["ano"] == ano])) == 12
+
+
+def test_sem_texto_de_maquina(base):
+    proibidos = ("estrela", "raio-X", "raio x", "indispensável", "nunca usamos", "para antecipar")
+    for q in R.gerar(base):
+        baixo = q["resposta"].lower()
+        for p in proibidos:
+            assert p not in baixo, (q["n"], p)
