@@ -41,6 +41,10 @@ hr{border-color:var(--rule);}
 .heatmap th{font-family:'IBM Plex Sans','Segoe UI',sans-serif;font-weight:500;color:var(--muted);font-size:12px;padding:4px 6px;}
 .heatmap th.rowh{text-align:left;color:var(--ink);font-weight:600;font-size:13.5px;white-space:nowrap;}
 .heatmap td{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:9px 6px;border-radius:4px;}
+.escala{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:11.5px;
+  color:var(--muted);margin:2px 0 14px;font-family:'IBM Plex Sans','Segoe UI',sans-serif;}
+.escala span{display:inline-flex;align-items:center;gap:5px;}
+.escala i{display:inline-block;width:24px;height:11px;border-radius:3px;}
 .subsecao h5{margin:0;font-size:15.5px;color:var(--charcoal);font-weight:600;
   font-family:'IBM Plex Sans','Segoe UI',sans-serif;}
 .nota{background:#F4F5FD;border-left:3px solid var(--lilac);padding:12px 14px;margin:10px 0;max-width:82ch;}
