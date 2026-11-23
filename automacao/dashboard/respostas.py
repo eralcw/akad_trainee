@@ -1,12 +1,13 @@
 """Respostas Q1–Q12 do case, escritas a partir dos dados filtrados.
 
-Cada resposta é um dict {n, pergunta, curta, resposta}:
-  - `curta`    uma frase, para legenda de gráfico e para a fala;
-  - `resposta` markdown completo (frase-resposta, tabela de apoio, leitura).
+Cada resposta é um dict {n, pergunta, curta, corpo, resposta}:
+  - `curta`    uma frase direta, para destaque visual, legenda de gráfico e fala;
+  - `corpo`    explicação detalhada em linguagem clara + tabela de apoio + cuidados;
+  - `resposta` `**curta**` + `corpo` (usado no download em Markdown e no roteiro HTML).
 
 Todo número vem da base recebida: se o usuário filtra LOBs ou anos, o texto muda
 junto. As únicas partes fixas são o contexto de marca e a recomendação da Q12
-(papel de cada LOB), que são julgamento, não resultado automático.
+(papel de cada LOB), que são julgamento de negócio, não resultado automático.
 
 Método: sinistralidade e margem = razão de somas; resultado técnico = prêmio ganho
 + receita de resseguro − sinistro ocorrido − despesa de resseguro − despesa
@@ -17,7 +18,6 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
 import pandas as pd
 
 from . import analise as A
@@ -62,8 +62,9 @@ def _tabela(cab: list[str], linhas: list[list], esq=1) -> str:
 
 
 def _item(n: str, pergunta: str, curta: str, corpo: str = "") -> dict:
-    texto = f"**{curta}**" + (f"\n\n{corpo.strip()}" if corpo.strip() else "")
-    return {"n": n, "pergunta": pergunta, "curta": curta, "resposta": texto}
+    corpo_limpo = corpo.strip()
+    texto = f"**{curta}**" + (f"\n\n{corpo_limpo}" if corpo_limpo else "")
+    return {"n": n, "pergunta": pergunta, "curta": curta, "corpo": corpo_limpo, "resposta": texto}
 
 
 def _mult(a: float, b: float) -> float:
@@ -102,7 +103,6 @@ class _Ctx:
         fa = sorted(int(a) for a in self.fase["ano"].unique())
         self.f0, self.f1 = fa[0], fa[-1]
         self.fase_rotulo = f"{self.f0}–{self.f1}" if self.f0 != self.f1 else str(self.f0)
-        # a fase só é um recorte distinto se o período também tem anos anteriores a 2022
         self.fase_distinta = self.tem_fase and self.a0 < INICIO_FASE_AKAD
 
     def premio_ano(self, lob: str, ano: int, so_akad: bool = False) -> float:
@@ -120,19 +120,34 @@ def _q01(c: _Ctx) -> dict:
     lob = c.lob
     total = float(lob["premio"].sum())
     top = lob.index[0]
+    bot = lob.index[-1]
     if len(lob) == 1:
-        curta = f"{top} soma {A.f_bi(lob.loc[top, 'premio'])} em {c.periodo}."
+        curta = f"{top} soma {A.f_bi(lob.loc[top, 'premio'])} de prêmio ganho em {c.periodo}."
     else:
         curta = (
             f"{top} lidera com {A.f_bi(lob.loc[top, 'premio'])}, "
-            f"{_pct(lob.loc[top, 'premio'] / total, 0)} do prêmio das {len(lob)} LOBs em {c.periodo}."
+            f"{_pct(lob.loc[top, 'premio'] / total, 0)} de todo o prêmio das {len(lob)} LOBs em {c.periodo}."
         )
+
+    explicacao = [
+        f"**O que os dados mostram:** somando as {len(lob)} linhas de negócio em {c.periodo}, o mercado "
+        f"movimentou **{A.f_bi(total)}** em prêmio ganho (receita de seguros já reconhecida no período)."
+    ]
+    if len(lob) > 1:
+        seg = lob.index[1]
+        explicacao.append(
+            f"{top} ocupa a liderança com folga ({A.f_bi(lob.loc[top, 'premio'])}, {_pct(lob.loc[top, 'premio'] / total)} do total), "
+            f"à frente de {seg} ({A.f_bi(lob.loc[seg, 'premio'])}, {_pct(lob.loc[seg, 'premio'] / total)}). "
+            f"Na outra ponta, {bot} é o menor mercado ({A.f_bi(lob.loc[bot, 'premio'])}, {_pct(lob.loc[bot, 'premio'] / total)})."
+        )
+
     linhas = [[l, A.f_bi(r["premio"]), _pct(r["premio"] / total)] for l, r in lob.iterrows()]
-    corpo = (
-        _tabela(["LOB", "Prêmio ganho", "% do total"], linhas)
-        + "\n\nValores nominais, sem correção pela inflação. Prêmio mede tamanho de mercado, "
-        "não rentabilidade: a maior LOB não é necessariamente a mais lucrativa (ver Q5 e Q6)."
+    nota = (
+        "**Leitura de negócio:** prêmio ganho mede **tamanho (faturamento)**, não lucro — "
+        "a maior LOB em volume não é necessariamente a mais rentável (ver Q5 e Q6). "
+        "Os valores são nominais (conforme publicados pela SUSEP, sem correção pela inflação)."
     )
+    corpo = "\n\n".join(explicacao) + "\n\n" + _tabela(["LOB", "Prêmio ganho", "% do total"], linhas) + "\n\n" + nota
     return _item("01", "Qual a LOB com maior prêmio no período inteiro (2020 a 2025)?", curta, corpo)
 
 
@@ -155,19 +170,38 @@ def _q02(c: _Ctx) -> dict:
         cab = ["LOB", f"Ativas {a0}", f"Linhas no SES {a0}"]
         linhas = [[l, int(atv.loc[l, a0]), int(pres.loc[l, a0])] for l in c.lobs]
         leitura_pres = f"{pl0} em {a0}"
+        dinamica = (
+            f"**O que os dados mostram:** considerando apenas seguradoras que efetivamente operaram "
+            f"(prêmio ganho > 0), {l0} concentra o maior número de concorrentes ({n0} empresas)."
+        )
     else:
-        cab = ["LOB", f"Ativas {a0}", f"Ativas {a1}", f"Linhas no SES {a0}", f"Linhas no SES {a1}"]
+        cab = ["LOB", f"Ativas {a0}", f"Ativas {a1}", "Variação", f"Linhas no SES {a0}", f"Linhas no SES {a1}"]
         linhas = [
-            [l, int(atv.loc[l, a0]), int(atv.loc[l, a1]), int(pres.loc[l, a0]), int(pres.loc[l, a1])]
+            [
+                l, int(atv.loc[l, a0]), int(atv.loc[l, a1]),
+                f"{int(atv.loc[l, a1]) - int(atv.loc[l, a0]):+d}",
+                int(pres.loc[l, a0]), int(pres.loc[l, a1]),
+            ]
             for l in c.lobs
         ]
         leitura_pres = f"{pl0} em {a0} e {pl1} em {a1}"
-    corpo = (
-        _tabela(cab, linhas)
-        + "\n\nAtiva = seguradora com prêmio ganho maior que zero no ano. O SES também lista "
-        "seguradoras cadastradas sem operação; se a contagem fosse por presença de linha, a "
-        f"leitura seria {leitura_pres}, mas isso mede cadastro, não atividade."
+        deltas = {l: int(atv.loc[l, a1]) - int(atv.loc[l, a0]) for l in c.lobs}
+        maior_entrada = max(deltas, key=deltas.get)
+        menor_l = min(c.lobs, key=lambda l: int(atv.loc[l, a1]))
+        dinamica = (
+            f"**O que os dados mostram:** {l1} é o mercado mais disputado em número de players ({n1} ativas em {a1}). "
+            f"No período, **{maior_entrada}** foi quem mais atraiu novos entrantes "
+            f"({int(atv.loc[maior_entrada, a0])} → {int(atv.loc[maior_entrada, a1])}, {deltas[maior_entrada]:+d} seguradoras). "
+            f"Já **{menor_l}** tem o menor grupo de ativas ({int(atv.loc[menor_l, a1])} em {a1}), sugerindo barreiras "
+            "técnicas ou operacionais mais altas para entrar."
+        )
+
+    nota = (
+        "**Por que definimos 'ativa = prêmio ganho > 0'?** O SES lista seguradoras apenas registradas "
+        "no ramo, mesmo sem vender nada no ano (ou só pagando sinistros antigos). Se contássemos todas "
+        f"as linhas da tabela, o líder mudaria para **{leitura_pres}** — mas isso mede cadastro, não operação real."
     )
+    corpo = dinamica + "\n\n" + _tabela(cab, linhas) + "\n\n" + nota
     return _item("02", "Qual a LOB com mais seguradoras ativas em 2020? E em 2025?", curta, corpo)
 
 
@@ -175,29 +209,50 @@ def _q03(c: _Ctx) -> dict:
     d = c.lob.sort_values("sinistralidade", ascending=False)
     top = d.index[0]
     curta = f"{top} tem a maior sinistralidade do período: {_pct(d.loc[top, 'sinistralidade'])}"
+    empate_txt = ""
     if len(d) > 1:
         seg = d.index[1]
         gap = d.loc[top, "sinistralidade"] - d.loc[seg, "sinistralidade"]
         if gap < 0.005:
-            curta += (
-                f", em empate técnico com {seg} ({_pct(d.loc[seg, 'sinistralidade'])}; "
-                f"diferença de {gap * 100:.1f} pp)".replace(".", ",")
+            gap_str = f"{gap * 100:.1f}".replace(".", ",")
+            curta += f", em empate técnico com {seg} ({_pct(d.loc[seg, 'sinistralidade'])}; diferença de {gap_str} pp)"
+            empate_txt = (
+                f"Na prática, **{top} ({_pct(d.loc[top, 'sinistralidade'])})** e **{seg} ({_pct(d.loc[seg, 'sinistralidade'])})** "
+                f"estão empatadas no topo (diferença de apenas {gap_str} pp) — em ambas, mais da metade de cada real "
+                "arrecadado é consumida por indenizações. "
             )
     curta += "."
+
+    explicacao = (
+        "**O que é sinistralidade:** mede qual fração do prêmio ganho foi gasta pagando sinistros "
+        "(acidentes, roubos, processos ou indenizações cobertas). **Quanto menor, melhor.** "
+        + empate_txt
+    )
+    if len(d) > 1:
+        low = d.index[-1]
+        explicacao += (
+            f"Na outra ponta, **{low}** opera em um patamar completamente diferente "
+            f"(**{_pct(d.loc[low, 'sinistralidade'])}**)"
+        )
+        if low == "Garantia":
+            explicacao += (
+                ": o Seguro Garantia funciona como uma fiança contratual/judicial, com análise de crédito "
+                "prévia e direito de cobrança de volta caso o cliente descumpra o contrato, o que mantém "
+                "a frequência de sinistros muito baixa."
+            )
+        else:
+            explicacao += "."
+
     linhas = [
         [l, A.f_bi(r["sinistro"]), A.f_bi(r["premio"]), _pct(r["sinistralidade"])]
         for l, r in d.iterrows()
     ]
-    corpo = _tabela(["LOB", "Sinistros ocorridos", "Prêmio ganho", "Sinistralidade"], linhas)
-    if len(d) > 1:
-        low = d.index[-1]
-        corpo += (
-            f"\n\n{low} é a menor ({_pct(d.loc[low, 'sinistralidade'])}). "
-        )
-    corpo += (
-        "Sinistralidade = soma dos sinistros ocorridos ÷ soma dos prêmios ganhos "
-        "(razão de somas, não média das razões anuais)."
+    nota = (
+        "**Método:** calculada sempre como `soma(sinistros ocorridos) ÷ soma(prêmios ganhos)` "
+        "(razão de somas). Nunca usamos média simples de percentuais, pois isso daria peso igual "
+        "a anos ou ramos pequenos e distorceria o resultado."
     )
+    corpo = explicacao + "\n\n" + _tabela(["LOB", "Sinistros ocorridos", "Prêmio ganho", "Sinistralidade"], linhas) + "\n\n" + nota
     return _item("03", "Qual a LOB com maior sinistralidade no período inteiro?", curta, corpo)
 
 
@@ -230,28 +285,37 @@ def _q04(c: _Ctx) -> dict:
             A.nome_curto(b["seguradora"]), _pct(b["sinistralidade"], 0), A.f_din(b["premio"]),
         ])
     cab = ["LOB", "Com corte ≥ 1%", "Sinistr.", "Share",
-           "Sem corte", "Sinistr.", "Prêmio da seguradora"]
+           "Sem corte (literal)", "Sinistr.", "Prêmio da seguradora"]
     curta = q4_curta(c.base, 0.01)
     extremo = max(
         (sem.loc[l] for l in c.lobs if l in sem.index),
         key=lambda r: r["sinistralidade"],
         default=None,
     )
-    corpo = _tabela(cab, linhas, esq={0, 1, 4})
-    corpo += (
-        "\n\nA resposta usa corte de materialidade: só entram seguradoras com pelo menos 1% do "
-        "prêmio da LOB no período. Sem o corte, o ranking vira uma lista de seguradoras minúsculas"
+
+    intro = (
+        "**Por que mostramos duas colunas (com corte e sem corte)?** "
+        "No mercado de seguros existem empresas em *run-off* (pararam de vender, mas ainda pagam "
+        "sinistros antigos) ou com operação minúscula. Quando o prêmio é quase zero, um único sinistro "
+        "faz a sinistralidade explodir matematicamente"
     )
     if extremo is not None:
-        corpo += (
-            f" (por exemplo, {A.nome_curto(extremo['seguradora'])}: sinistralidade de "
-            f"{_pct(extremo['sinistralidade'], 0)} sobre um prêmio de {A.f_din(extremo['premio'])})"
+        intro += (
+            f" — é o caso da **{A.nome_curto(extremo['seguradora'])}**, que aparece com "
+            f"**{_pct(extremo['sinistralidade'], 0)}** sobre um prêmio de apenas **{A.f_din(extremo['premio'])}**"
         )
-    corpo += (
-        ", em que um único sinistro domina a razão. O cálculo é por seguradora, somando o período "
-        "(razão de somas), sobre linhas com prêmio positivo; sinistralidade negativa é reversão "
-        "de reserva e, por isso, nunca aparece como a maior."
+    intro += (
+        ". Por isso, apresentamos o ranking **com corte de materialidade (share ≥ 1% da LOB)** "
+        "como resposta principal de negócio, e o ranking **sem corte** ao lado para responder literalmente."
     )
+
+    nota = (
+        "**Nota técnica:** o cálculo soma sinistros e prêmios da seguradora no período inteiro "
+        "(sobre linhas com prêmio > 0). Algumas empresas apresentam sinistralidade **negativa** — "
+        "isso não é erro, mas **reversão de reserva** (a seguradora havia provisionado um valor para "
+        "sinistros antigos e acabou pagando menos), motivo pelo qual nunca aparecem como a maior."
+    )
+    corpo = intro + "\n\n" + _tabela(cab, linhas, esq={0, 1, 4}) + "\n\n" + nota
     return _item("04", "Qual a seguradora com maior sinistralidade no período em cada LOB?", curta, corpo)
 
 
@@ -268,15 +332,38 @@ def _q05(c: _Ctx) -> dict:
     if len(d) > 1 and pos_premio != 1:
         curta += f", mesmo sendo a {pos_premio}ª em prêmio"
     curta += "."
+
+    explicacao = (
+        "**O que é Resultado Técnico:** é o \"lucro da operação pura de seguros\" — quanto sobra do "
+        "prêmio ganho depois de pagar sinistros, comissão de corretores e o saldo líquido de resseguro. "
+        f"No total do período ({c.periodo}), as {len(d)} LOBs geraram **{A.f_bi(total)}**."
+    )
+    if len(d) > 1:
+        maior_prem = c.lob.index[0]
+        if top != maior_prem:
+            explicacao += (
+                f"\n\n**Por que {top} vence mesmo não sendo a maior em prêmio?** "
+                f"{top} combina escala relevante ({A.f_bi(d.loc[top, 'premio'])}) com sinistralidade muito baixa "
+                f"({_pct(d.loc[top, 'sinistralidade'])}), o que preserva uma margem alta ({_pct(d.loc[top, 'margem'])}). "
+                f"Já {maior_prem} fatura muito mais ({A.f_bi(c.lob.loc[maior_prem, 'premio'])}), mas entrega uma margem "
+                f"bem mais apertada ({_pct(c.lob.loc[maior_prem, 'margem'])}), gerando {A.f_bi(c.lob.loc[maior_prem, 'lucro'])}."
+            )
+
     linhas = [
-        [l, A.f_bi(r["lucro"]), _pct(r["lucro"] / total) if total > 0 else "–", A.f_bi(r["premio"])]
+        [l, A.f_bi(r["lucro"]), _pct(r["lucro"] / total) if total > 0 else "–", A.f_bi(r["premio"]), _pct(r["margem"])]
         for l, r in d.iterrows()
     ]
+    nota = (
+        "**Fórmula e limite:** `Prêmio ganho + Receita de resseguro − Sinistro ocorrido − "
+        "Despesa de resseguro − Despesa comercial`. Não é lucro líquido contábil: ficam de fora "
+        "despesas administrativas (salários, TI, estrutura), impostos e o resultado financeiro (juros sobre o caixa)."
+    )
     corpo = (
-        _tabela(["LOB", "Resultado técnico", "% do total", "Prêmio ganho"], linhas)
-        + "\n\nResultado técnico = prêmio ganho + receita com resseguro − sinistro ocorrido − "
-        "despesa com resseguro − despesa comercial. Não é lucro contábil: ficam de fora despesas "
-        "administrativas, impostos e o resultado financeiro."
+        explicacao
+        + "\n\n"
+        + _tabela(["LOB", "Resultado técnico", "% do total", "Prêmio ganho", "Margem"], linhas)
+        + "\n\n"
+        + nota
     )
     return _item("05", "Quanto foi o resultado técnico (receitas – despesas) de cada LOB?", curta, corpo)
 
@@ -292,25 +379,43 @@ def _q06(c: _Ctx) -> dict:
     curta += "."
 
     comp = {l: A.componentes(c.base[c.base["lob"] == l]) for l in d.index}
-    linhas = [
-        [l, _pct(comp[l]["sin"]), _pct(comp[l]["resseg"]), _pct(comp[l]["com"]), _pct(comp[l]["margem"])]
-        for l in d.index
-    ]
-    corpo = _tabela(
-        ["LOB", "Sinistralidade", "Resseguro líquido", "Despesa comercial", "Margem"], linhas
-    )
-    corpo += (
-        "\n\nMargem = resultado técnico ÷ prêmio ganho = 100% − sinistralidade − resseguro líquido "
-        "(despesa − receita com resseguro) − despesa comercial."
+    explicacao = (
+        "**Como ler a margem:** mostra quantos centavos sobram de cada R$ 1,00 de prêmio ganho "
+        f"(em {top}, sobram **{_pct(d.loc[top, 'margem'])}**; em {bot}, apenas **{_pct(d.loc[bot, 'margem'])}**). "
+        "A margem é sempre o que resta após três blocos de custo: "
+        "`100% − Sinistralidade − Resseguro líquido − Despesa comercial`."
     )
     if len(d) > 1:
         dif = {k: comp[top][k] - comp[bot][k] for k in ("sin", "resseg", "com")}
         gap_pp = f"{(d.loc[top, 'margem'] - d.loc[bot, 'margem']) * 100:.1f}".replace(".", ",")
-        corpo += (
-            f" A diferença de {gap_pp} pp entre {top} e {bot} "
-            f"vem de sinistralidade ({A.f_pp(-dif['sin'])}), resseguro líquido ({A.f_pp(-dif['resseg'])}) "
-            f"e despesa comercial ({A.f_pp(-dif['com'])}), a favor de {top}."
+        explicacao += (
+            f"\n\n**O que explica os {gap_pp} pp de vantagem de {top} sobre {bot}:** "
+            f"sinistralidade ({A.f_pp(-dif['sin'])}), resseguro líquido ({A.f_pp(-dif['resseg'])}) "
+            f"e despesa comercial ({A.f_pp(-dif['com'])}) a favor de {top}. "
         )
+        if "Garantia" in comp:
+            explicacao += (
+                f"Vale notar também **Garantia**: mesmo com sinistralidade muito baixa ({_pct(comp['Garantia']['sin'])}), "
+                f"ela cede bastante risco ao ressegurador ({_pct(comp['Garantia']['resseg'])} de resseguro líquido), "
+                f"fechando em {_pct(comp['Garantia']['margem'])} de margem."
+            )
+
+    linhas = [
+        [l, _pct(comp[l]["sin"]), _pct(comp[l]["resseg"]), _pct(comp[l]["com"]), _pct(comp[l]["margem"])]
+        for l in d.index
+    ]
+    nota = (
+        "**Leitura conjunta:** margem alta em mercado pequeno não resolve escala sozinha "
+        "(por isso Q6 deve ser lida sempre junto com Q1 e Q5). "
+        "Resseguro líquido = despesa com resseguro − receita com resseguro."
+    )
+    corpo = (
+        explicacao
+        + "\n\n"
+        + _tabela(["LOB", "Sinistralidade", "Resseguro líquido", "Despesa comercial", "Margem"], linhas)
+        + "\n\n"
+        + nota
+    )
     return _item("06", "Quanto foi a margem (resultado técnico/prêmio) de cada LOB?", curta, corpo)
 
 
@@ -331,21 +436,42 @@ def _q07(c: _Ctx) -> dict:
             f"{pct_top} cresce mais em porcentagem ({_pct(d.loc[pct_top, 'pct'])}); "
             f"{abs_top} adiciona mais em valor absoluto (+{A.f_bi(d.loc[abs_top, 'abs'])})."
         )
+
+    if pct_top != abs_top:
+        vezes = d.loc[abs_top, "abs"] / max(d.loc[pct_top, "abs"], 1.0)
+        explicacao = (
+            "**Por que porcentagem e valor absoluto apontam líderes diferentes (efeito base pequena)?** "
+            "Porcentagem mede **velocidade**; valor absoluto mede **volume de dinheiro novo**.\n\n"
+            f"- **{pct_top} (1º em %):** cresceu **{_pct(d.loc[pct_top, 'pct'])}** ({_pct(d.loc[pct_top, 'cagr'])} ao ano), "
+            f"mas partiu de uma base pequena ({A.f_bi(d.loc[pct_top, 'primeiro'])} em {c.a0}), somando **{A.f_bi(d.loc[pct_top, 'abs'])}**.\n"
+            f"- **{abs_top} (1º em R$):** cresceu num ritmo percentual menor ({_pct(d.loc[abs_top, 'pct'])}), "
+            f"mas sobre uma base muito maior ({A.f_bi(d.loc[abs_top, 'primeiro'])}), adicionando **{A.f_bi(d.loc[abs_top, 'abs'])}** "
+            f"— cerca de **{vezes:.1f}×** o volume em reais que {pct_top} trouxe ao mercado.".replace(".", ",")
+        )
+    else:
+        explicacao = (
+            f"**{pct_top}** lidera tanto em velocidade ({_pct(d.loc[pct_top, 'pct'])}) "
+            f"quanto em volume adicionado (+{A.f_bi(d.loc[pct_top, 'abs'])})."
+        )
+
     linhas = [
         [l, A.f_bi(r["primeiro"]), A.f_bi(r["ultimo"]), A.f_bi(r["abs"]), _pct(r["pct"]), _pct(r["cagr"])]
         for l, r in d.sort_values("pct", ascending=False).iterrows()
     ]
-    corpo = _tabela(
-        ["LOB", f"Prêmio {c.a0}", f"Prêmio {c.a1}", "Variação absoluta", "Variação %", "Ao ano (CAGR)"],
-        linhas,
+    nota = (
+        "**Nota:** CAGR é a taxa média composta de crescimento por ano no intervalo selecionado. "
+        "Os valores são nominais, portanto o crescimento inclui a inflação do período."
     )
-    if pct_top != abs_top:
-        corpo += (
-            f"\n\nOs dois critérios contam histórias diferentes: {pct_top} parte de uma base de "
-            f"{A.f_bi(d.loc[pct_top, 'primeiro'])} e por isso soma só {A.f_bi(d.loc[pct_top, 'abs'])}; "
-            f"{abs_top} cresce a uma taxa menor sobre uma base maior e é quem mais aumenta o mercado em reais."
+    corpo = (
+        explicacao
+        + "\n\n"
+        + _tabela(
+            ["LOB", f"Prêmio {c.a0}", f"Prêmio {c.a1}", "Variação absoluta", "Variação %", "Ao ano (CAGR)"],
+            linhas,
         )
-    corpo += " Valores nominais: o crescimento inclui inflação."
+        + "\n\n"
+        + nota
+    )
     return _item("07", pergunta, curta, corpo)
 
 
@@ -388,20 +514,36 @@ def _q08(c: _Ctx) -> dict:
                 partes.append(f"{l} (sinistralidade {A.f_pp(d_sin)})")
             else:
                 partes.append(f"{l} (margem {A.f_pp(d_mg)})")
-        curta += f"se comportam como o mercado, exceto em {_lista(partes)}."
+        curta += f"operam próximas do mercado, exceto em {_lista(partes)}."
     else:
-        curta += "se comportam como o mercado (diferenças menores que 2 pp)."
-    corpo = _tabela(
-        ["LOB", "Ativas no período", "Relevantes (80%)", "Top 5", "Sinistralidade das relevantes (vs mercado)",
-         "Margem das relevantes (vs mercado)", "Líderes"],
-        linhas,
-        esq={0, 6},
+        curta += "operam muito próximas da média do mercado (diferenças menores que 2 pp)."
+
+    explicacao = (
+        "**Como definimos 'relevante':** ordenamos todas as seguradoras ativas da maior para a menor em prêmio "
+        "e selecionamos o grupo que soma **80% do mercado (regra de Pareto)**. Em vez de olhar 50+ empresas, "
+        f"vemos que apenas **{intervalo} seguradoras** concentram a maior parte do volume em cada LOB.\n\n"
+        f"**Estrutura competitiva:** a concentração é **moderada** (Top 5 entre {_pct(min(top5s), 0)} e {_pct(max(top5s), 0)}): "
+        "nenhuma LOB é um monopólio fechado, mas também nenhuma é totalmente pulverizada. "
+        "Na comparação contra o mercado inteiro, as relevantes tendem a acompanhar a média (já que compõem 80% dela), "
+        "com vantagens de escala/seleção mais visíveis onde o diferencial passa de 2 pp."
     )
-    corpo += (
-        "\n\nRelevante = seguradora entre as que, somadas em ordem de prêmio, chegam a 80% do prêmio "
-        "da LOB. A diferença entre parênteses é contra o mercado inteiro da LOB. A concentração é "
-        "moderada: nenhuma LOB é duopólio, mas também nenhuma é pulverizada. Na aba Concorrência há a "
-        "lista completa das relevantes, com share, margem e sinistralidade de cada uma."
+
+    nota = (
+        "**Onde aprofundar:** na aba **Concorrência**, você pode escolher qualquer LOB para ver a lista "
+        "completa das seguradoras do top 80%, a curva acumulada de Pareto e o gráfico de dispersão "
+        "(Sinistralidade × Margem) destacando a estrela da Akad."
+    )
+    corpo = (
+        explicacao
+        + "\n\n"
+        + _tabela(
+            ["LOB", "Ativas no período", "Relevantes (80%)", "Top 5", "Sinistralidade das relevantes (vs mercado)",
+             "Margem das relevantes (vs mercado)", "Líderes (Top 3)"],
+            linhas,
+            esq={0, 6},
+        )
+        + "\n\n"
+        + nota
     )
     return _item("08", "Quais são as seguradoras realmente relevantes de cada LOB? Como margem e sinistralidade delas se comparam ao mercado?", curta, corpo)
 
@@ -435,20 +577,7 @@ def _q09(c: _Ctx) -> dict:
             pior_txt[l] = f"pior ano {int(r['ano'])}, com {_pct(r['sinistralidade'])}"
     cagr_premio = c.cresc["cagr"] if not c.cresc.empty else pd.Series(dtype=float)
 
-    linhas = [
-        [l, _pct(r["sin_media"]), _pct(r["vol"]), _rotulo_tendencia(r["slope"]), pior.get(l, "–"),
-         _pct(r["cresc_sinistro"]), _pct(cagr_premio.get(l, math.nan))]
-        for l, r in t.sort_values("sin_media").iterrows()
-    ]
-    tabela = _tabela(
-        ["LOB", "Sinistralidade média anual", "Volatilidade (desvio)", "Tendência", "Pior ano",
-         "Crescimento dos sinistros ao ano", "Crescimento do prêmio ao ano"],
-        linhas,
-        esq={0, 3, 4},
-    )
-
     nivel = t["sin_media"].idxmin()
-    # atratividade: margem alta, sinistralidade baixa e crescimento alto (ranking médio)
     ranks = pd.DataFrame(index=t.index)
     ranks["margem"] = c.lob.loc[t.index, "margem"].rank(ascending=False)
     ranks["sin"] = c.lob.loc[t.index, "sinistralidade"].rank(ascending=True)
@@ -462,54 +591,75 @@ def _q09(c: _Ctx) -> dict:
         curta = f"{nivel} é a LOB mais saudável e atrativa: menor sinistralidade e melhor conjunto de margem e crescimento."
     else:
         curta = (
-            f"{nivel} é a mais saudável em nível de sinistralidade ({_pct(t.loc[nivel, 'sin_media'])} em média); "
+            f"{nivel} é a mais saudável em nível puro de sinistralidade ({_pct(t.loc[nivel, 'sin_media'])} em média); "
             f"no conjunto margem + sinistralidade + crescimento, {atrativa} é a mais atrativa."
         )
 
     melhora = [f"{l} ({A.f_pp(r['slope'])}/ano)" for l, r in t.iterrows() if not _nan(r["slope"]) and r["slope"] < -0.005]
     piora = [f"{l} ({A.f_pp(r['slope'])}/ano)" for l, r in t.iterrows() if not _nan(r["slope"]) and r["slope"] > 0.005]
     estavel = [l for l, r in t.iterrows() if not _nan(r["slope"]) and abs(r["slope"]) <= 0.005]
-    tem_serie = bool(t["slope"].notna().any())  # tendência e volatilidade exigem 2+ anos
+
+    tem_serie = bool(t["slope"].notna().any())
+    intro = (
+        "**Por que olhar 3 dimensões (nível, tendência e volatilidade)?** "
+        "Uma LOB saudável não é apenas a que tem média baixa hoje: é preciso ver se o risco está "
+        "**melhorando ou piorando** ano a ano e o quanto ele **oscila (volatilidade)** — porque picos "
+        "repentinos de sinistralidade consomem capital e geram prejuízos inesperados."
+    )
+
     pontos = []
     if tem_serie:
         pontos.append(
-            "**Tendência da sinistralidade:** "
+            "**Direção da sinistralidade:** "
             + "; ".join(
                 x for x in [
-                    f"melhora em {_lista(melhora)}" if melhora else "",
-                    f"piora em {_lista(piora)}" if piora else "",
+                    f"melhora consistente em {_lista(melhora)}" if melhora else "",
+                    f"tendência de piora em {_lista(piora)}" if piora else "",
                     f"estável em {_lista(estavel)}" if estavel else "",
                 ] if x
             )
-            + "."
+            + ". Quando os sinistros crescem menos que o prêmio ao ano, a sinistralidade cai (e vice-versa)."
         )
         if len(t) > 1:
             estavel_top, volatil = t["vol"].idxmin(), t["vol"].idxmax()
             pontos.append(
-                f"**Estabilidade:** {estavel_top} é a mais estável (desvio de {_pct(t.loc[estavel_top, 'vol'])}) "
-                f"e {volatil} a mais volátil (desvio de {_pct(t.loc[volatil, 'vol'])}; {pior_txt.get(volatil, '')})."
+                f"**Previsibilidade vs risco de susto:** **{estavel_top}** é a mais previsível "
+                f"(desvio anual de apenas {_pct(t.loc[estavel_top, 'vol'])}), mas estabilizada em patamar alto "
+                f"({_pct(t.loc[estavel_top, 'sin_media'])}). Já **{volatil}** é a mais imprevisível "
+                f"(desvio de {_pct(t.loc[volatil, 'vol'])}; {pior_txt.get(volatil, '')})."
             )
         if len(t) > 1 and nivel != atrativa:
             cresc_atr = (
-                f", crescimento de {_pct(c.cresc.loc[atrativa, 'pct'])} no período"
+                f" e crescimento de {_pct(c.cresc.loc[atrativa, 'pct'])}"
                 if not c.cresc.empty and atrativa in c.cresc.index else ""
             )
             pontos.append(
-                f"**Nível × conjunto:** {nivel} tem o menor nível de sinistralidade, mas com tendência de "
-                f"{_rotulo_tendencia(t.loc[nivel, 'slope'])} e {pior_txt.get(nivel, 'oscilação entre os anos')}. "
-                f"{atrativa} combina a margem de {_pct(c.lob.loc[atrativa, 'margem'])}, sinistralidade de "
-                f"{_pct(c.lob.loc[atrativa, 'sinistralidade'])} ({_rotulo_tendencia(t.loc[atrativa, 'slope'])})"
-                f"{cresc_atr}. Por isso a escolha da mais atrativa combina os três critérios, não só a média."
+                f"**Qual escolher como mais saudável/atrativa?** **{nivel}** vence em nível absoluto de risco "
+                f"({_pct(t.loc[nivel, 'sin_media'])}), mas apresenta {_rotulo_tendencia(t.loc[nivel, 'slope'])}. "
+                f"Olhando o pacote completo de atratividade, **{atrativa}** se destaca por combinar a maior margem "
+                f"({_pct(c.lob.loc[atrativa, 'margem'])}), sinistralidade controlada ({_pct(c.lob.loc[atrativa, 'sinistralidade'])}, "
+                f"com {_rotulo_tendencia(t.loc[atrativa, 'slope'])}){cresc_atr}."
             )
     else:
-        pontos.append("Selecione pelo menos dois anos para medir tendência e volatilidade.")
-    corpo = (
-        tabela
-        + "\n\nSinistralidade média = média simples dos anos (usada para medir volatilidade e tendência; "
-        "o nível do período, por razão de somas, está na Q3). Tendência = inclinação da reta ajustada à "
-        "sinistralidade anual, em pontos percentuais por ano; ±0,5 pp/ano é tratado como estável.\n\n"
-        + "\n".join(f"- {p}" for p in pontos)
+        pontos.append("Selecione pelo menos dois anos no filtro para medir tendência e volatilidade.")
+
+    linhas = [
+        [l, _pct(r["sin_media"]), _pct(r["vol"]), _rotulo_tendencia(r["slope"]), pior.get(l, "–"),
+         _pct(r["cresc_sinistro"]), _pct(cagr_premio.get(l, math.nan))]
+        for l, r in t.sort_values("sin_media").iterrows()
+    ]
+    tabela = _tabela(
+        ["LOB", "Sinistralidade média anual", "Volatilidade (desvio)", "Tendência", "Pior ano",
+         "Sinistros ao ano", "Prêmio ao ano"],
+        linhas,
+        esq={0, 3, 4},
     )
+    nota = (
+        "**Método:** aqui usamos a média simples das sinistralidades anuais apenas para medir volatilidade "
+        "(desvio-padrão) e tendência (inclinação da reta em pp/ano; entre −0,5 e +0,5 pp/ano = estável). "
+        "Para o nível oficial acumulado do período (soma ÷ soma), consulte a Q3."
+    )
+    corpo = intro + "\n\n" + "\n".join(f"- {p}" for p in pontos) + "\n\n" + tabela + "\n\n" + nota
     return _item("09", pergunta, curta, corpo)
 
 
@@ -542,9 +692,17 @@ def _q10(c: _Ctx) -> dict:
 
     if rel:
         curta = f"A Akad é relevante em {_lista([desc(l) for l in rel])}"
-        curta += f"; nas demais é subescala: {_lista([desc(l) for l in sub])}." if sub else "."
+        curta += f"; nas demais ainda é subescala: {_lista([desc(l) for l in sub])}." if sub else "."
     else:
         curta = f"A Akad é subescala em todas as LOBs selecionadas: {_lista([desc(l) for l in ak.index])}."
+
+    marca = (
+        "**Contexto indispensável (a virada de 2022):** a operação começou no Brasil em 2012 como "
+        "**Argo Seguros**, foi comprada em **2021** por um consórcio liderado pela **GP Investments** e "
+        "rebatizada como **Akad Seguros em junho de 2022**. Como o código SUSEP (`02798`) é o mesmo, os "
+        "dados de 2020–2025 formam uma série contínua, mas misturam duas gestões: **2020–2021 é Argo** "
+        "e **2022 em diante é Akad**."
+    )
 
     linhas = [
         [l, A.f_mi(r["premio0"]), A.f_mi(r["premio1"]), _pct(r["share0"]), _pct(r["share1"]),
@@ -557,24 +715,27 @@ def _q10(c: _Ctx) -> dict:
         linhas,
     )
 
-    corpo = tabela + "\n\nRelevante = entre as 5 maiores em prêmio na LOB ou com share de pelo menos 5% no último ano."
     if a0 == a1:
+        corpo = marca + "\n\n" + tabela + "\n\nRelevante = top 5 em prêmio na LOB ou share ≥ 5% no último ano."
         return _item("10", pergunta, curta, corpo)
 
     melhorou = [l for l, r in ak.iterrows() if not _nan(r["rank0"]) and not _nan(r["rank1"]) and r["rank1"] < r["rank0"]]
     piorou = [l for l, r in ak.iterrows() if not _nan(r["rank0"]) and not _nan(r["rank1"]) and r["rank1"] > r["rank0"]]
-    traj = f"**Posição:** o posto melhora em {len(melhorou)} de {len(ak)} LOBs ({_lista(melhorou)})" if melhorou else "**Posição:** nenhuma LOB melhora de posto"
+    traj = (
+        f"**Evolução da posição:** a Akad ganhou posições em **{len(melhorou)} de {len(ak)} LOBs** ({_lista(melhorou)})"
+        if melhorou else "**Evolução da posição:** nenhuma LOB ganhou posições"
+    )
     if piorou:
         det = []
         atv = A.ativas_por_ano(c.base, "premio")
         for l in piorou:
             r = ak.loc[l]
             det.append(
-                f"{l}, onde o posto cai de {int(r['rank0'])}º para {int(r['rank1'])}º mesmo com share de "
-                f"{_pct(r['share0'])} para {_pct(r['share1'])}, porque as seguradoras ativas foram de "
-                f"{int(atv.loc[l, a0])} para {int(atv.loc[l, a1])}"
+                f"**{l}**, onde o posto caiu de {int(r['rank0'])}º para {int(r['rank1'])}º mesmo com o share "
+                f"subindo ({_pct(r['share0'])} → {_pct(r['share1'])}), porque o mercado recebeu mais concorrentes "
+                f"({int(atv.loc[l, a0])} → {int(atv.loc[l, a1])} ativas)"
             )
-        traj += "; exceção: " + "; ".join(det)
+        traj += "; única exceção: " + "; ".join(det)
     traj += "."
 
     fase_txt = ""
@@ -583,10 +744,9 @@ def _q10(c: _Ctx) -> dict:
         for l in ak.index:
             s0 = c.premio_ano(l, c.f0, True) / max(c.premio_ano(l, c.f0), 1)
             s1 = c.premio_ano(l, c.f1, True) / max(c.premio_ano(l, c.f1), 1)
-            partes.append(f"{l} {_pct(s0)}→{_pct(s1)}")
-        fase_txt = f"**Só na fase Akad ({c.f0}–{c.f1}), o share foi:** " + "; ".join(partes) + "."
+            partes.append(f"{l}: {_pct(s0)} → {_pct(s1)}")
+        fase_txt = f"**Recorte da fase Akad ({c.f0}–{c.f1}):** " + " | ".join(partes) + "."
 
-    # o que pode explicar: fatos por LOB, calculados
     fatos = []
     for l, r in ak.iterrows():
         mult_ak = _mult(r["premio0"], r["premio1"])
@@ -594,42 +754,32 @@ def _q10(c: _Ctx) -> dict:
         m0, m1 = _margem_akad_ano(c.base, l, a0), _margem_akad_ano(c.base, l, a1)
         linha = (
             f"**{l}:** prêmio {A.f_mi(r['premio0'])} → {A.f_mi(r['premio1'])} "
-            f"({_x(mult_ak)}) contra {_x(mult_mk)} do mercado"
-            + f"; margem da Akad {_pct(m0)} → {_pct(m1)}."
+            f"({_x(mult_ak)} vs {_x(mult_mk)} do mercado); margem Akad {_pct(m0)} → {_pct(m1)}."
         )
         if math.isfinite(mult_ak) and mult_ak >= 8:
-            linha += " Partiu de uma base muito pequena: o salto reflete uma operação ainda incipiente que ganhou tração."
+            linha += " Partiu de base quase zero — na prática, reflete lançamento/ativação comercial da linha."
         elif relevante(r) and not _nan(m0) and not _nan(m1):
             if m1 < m0 - 0.05:
-                linha += " Cresceu perdendo margem."
+                linha += " **Atenção:** acelerou volume, mas sacrificando a margem."
             elif m1 > m0 + 0.05:
-                linha += " Cresceu ganhando margem."
-        if l == "Empresarial" and c.a0 <= 2022 and c.a1 >= 2024:
-            p22 = c.premio_ano(l, 2022, True)
-            p24 = c.premio_ano(l, 2024, True)
-            linha += (
-                f" Em Empresarial, o prêmio da Akad foi {A.f_mi(p22)} em 2022 e {A.f_mi(p24)} em 2024: "
-                "é um lançamento de produto, não crescimento de uma carteira madura."
-            )
+                linha += " **Destaque:** ganhou liderança e ainda expandiu a margem."
         fatos.append(linha)
 
-    marca = (
-        "**Contexto de marca:** a operação brasileira começou em 2012 como Argo Seguros, foi comprada "
-        "em 2021 por um grupo liderado pela GP Investments e passou a se chamar Akad em junho de 2022. "
-        "O código SUSEP (02798) não muda, então a série é contínua, mas 2020–2021 reflete a estratégia "
-        "Argo e 2022 em diante a da Akad. Por isso a posição atual deve ser lida de 2022 em diante."
-    )
     hip = (
-        "**O que pode explicar as mudanças (hipóteses; o SES não prova causalidade):** foco comercial "
-        "em corretores e em PMEs, apetite de risco e política de preço, capital disponível para reter "
-        "risco e a estrutura de resseguro. Os fatos acima mostram onde houve crescimento, mas "
-        "a causa exige dados internos (preço, comissão por canal, tratados de resseguro)."
+        "**O que pode explicar as mudanças (hipóteses de negócio):** o SES registra o resultado, mas não "
+        "prova a causa interna. Os movimentos são consistentes com o reposicionamento pós-2022 da Akad "
+        "(foco digital em corretores e PMEs, novo apetite de risco, lançamento de produtos como Empresarial "
+        "e política própria de preço e resseguro). Confirmar causalidade exige dados internos."
     )
-    corpo += "\n\n" + traj
+
+    blocos = [marca, traj]
     if fase_txt:
-        corpo += "\n\n" + fase_txt
-    corpo += "\n\n" + "\n".join(f"- {f}" for f in fatos) + "\n\n" + marca + "\n\n" + hip
-    return _item("10", pergunta, curta, corpo)
+        blocos.append(fase_txt)
+    blocos.append(tabela)
+    blocos.append("**Raio-X do movimento por LOB:**\n\n" + "\n".join(f"- {f}" for f in fatos))
+    blocos.append(hip)
+    blocos.append("Critério de relevância na Q10: top 5 em prêmio na LOB ou share ≥ 5% no último ano.")
+    return _item("10", pergunta, curta, "\n\n".join(blocos))
 
 
 # --------------------------------------------------------------------------
@@ -713,30 +863,35 @@ def _q11(c: _Ctx) -> dict:
     partes = []
     if consistentes:
         partes.append(
-            f"supera mercado, pares e relevantes em margem, sem piorar a sinistralidade, em {_lista(consistentes)}"
+            f"supera mercado, pares e relevantes em margem (sem piorar a sinistralidade) em {_lista(consistentes)}"
         )
     if abaixo:
-        partes.append(f"fica abaixo dos três em margem em {_lista(abaixo)}")
+        partes.append(f"fica abaixo dos três grupos em margem em {_lista(abaixo)}")
     if mistas:
-        partes.append(f"tem resultado misto em {_lista(mistas)}")
+        partes.append(f"tem desempenho misto em {_lista(mistas)}")
     curta = "A Akad " + "; ".join(partes) + "."
 
-    corpo = f"**Período {c.periodo}.**\n\n" + _tabela_comparacao(comp)
-    corpo += (
-        "\n\nPares = seguradoras com prêmio entre 1/3 e 3 vezes o da Akad na LOB no último ano; "
-        "relevantes = as que somam 80% do prêmio da LOB (sem a Akad); entre parênteses, o número de "
-        "seguradoras do grupo. \"Em linha\" = diferença de até 1 pp.\n\n"
-        + "\n".join(f"- {v}" for v in veredito)
+    intro = (
+        "**Como comparamos:** avaliamos a Akad contra **3 réguas** em **margem** e **sinistralidade**: "
+        "(1) **Mercado inteiro** da LOB; (2) **Pares de porte** (seguradoras com prêmio entre 1/3× e 3× o da Akad "
+        "no último ano); e (3) **Relevantes** (top 80% do prêmio, excluindo a Akad). "
+        "Diferenças de até 1 pp são tratadas como *em linha*."
     )
+
+    blocos = [
+        intro,
+        f"**Comparação no período {c.periodo}:**",
+        _tabela_comparacao(comp),
+        "\n".join(f"- {v}" for v in veredito),
+    ]
 
     if c.fase_distinta and c.f0 != c.f1:
         comp_f = _comparacao(c.fase, c.lobs)
         if not comp_f.empty:
-            corpo += (
-                f"\n\n**Só na fase Akad ({c.f0}–{c.f1}):**\n\n" + _tabela_comparacao(comp_f)
-            )
+            blocos.append(f"**Recorte da fase Akad ({c.f0}–{c.f1}):**")
+            blocos.append(_tabela_comparacao(comp_f))
 
-    # de onde vem a diferença de margem (na fase Akad, se existir)
+    # Decomposição da diferença de margem
     ref_df = c.fase
     ref_rot = f"{c.f0}–{c.f1}" if c.f0 != c.f1 else str(c.f0)
     linhas, notas = [], []
@@ -745,18 +900,25 @@ def _q11(c: _Ctx) -> dict:
         if any(_nan(k[x]) for x in k):
             continue
         linhas.append([l, A.f_pp(k["sin"]), A.f_pp(k["resseg"]), A.f_pp(k["com"]), A.f_pp(k["total"])])
-        notas.append(f"{l}: {A.f_pp(k['total'])} de margem frente ao mercado, puxado por {_driver(k)}")
+        notas.append(f"**{l} ({A.f_pp(k['total'])} vs mercado):** principal motor = {_driver(k)}.")
+
     if linhas:
-        corpo += (
-            f"\n\n**De onde vem a diferença de margem ({ref_rot}).** Contribuição de cada componente para "
-            "(margem da Akad − margem do mercado), em pontos percentuais do prêmio; positivo ajuda a Akad.\n\n"
-            + _tabela(["LOB", "Sinistralidade", "Resseguro líquido", "Despesa comercial", "Diferença de margem"], linhas)
-            + "\n\n" + "\n".join(f"- {n}" for n in notas)
-            + "\n\nResseguro líquido = despesa − receita com resseguro. Um valor menor que o do mercado "
-            "significa que a Akad cede menos risco: a margem sobe nos anos bons, mas a Akad retém mais "
-            "capital e mais volatilidade."
+        blocos.append(
+            f"**De onde vem a diferença de margem ({ref_rot})?** "
+            "Para entender *por que* a Akad ganha ou perde margem frente ao mercado, abrimos a diferença nos 3 componentes "
+            "(valores positivos ajudam a Akad; negativos prejudicam):"
         )
-    return _item("11", pergunta, curta, corpo)
+        blocos.append(
+            _tabela(["LOB", "Sinistralidade", "Resseguro líquido", "Despesa comercial", "Diferença de margem"], linhas)
+        )
+        blocos.append("\n".join(f"- {n}" for n in notas))
+        blocos.append(
+            "**Atenção ao resseguro:** um efeito positivo em *resseguro líquido* (como em E&O) significa que a Akad "
+            "cede menos risco ao ressegurador do que a média do mercado. Isso eleva a margem nos anos bons, mas exige "
+            "mais capital e aumenta a exposição a sinistros grandes."
+        )
+
+    return _item("11", pergunta, curta, "\n\n".join(blocos))
 
 
 # --------------------------------------------------------------------------
@@ -764,25 +926,16 @@ def _q11(c: _Ctx) -> dict:
 # --------------------------------------------------------------------------
 
 PAPEL = {
-    "E&O": ("Núcleo", "defender e expandir"),
-    "Transportes": ("Corrigir", "rentabilizar antes de crescer"),
-    "RCG": ("Aposta seletiva", "crescer em nichos, com controle de acumulação"),
-    "Garantia": ("Opcional", "só com parceria ou nicho"),
-    "Empresarial": ("Opcional", "não é prioridade"),
+    "E&O": ("Núcleo", "defender liderança e expandir o mercado"),
+    "Transportes": ("Corrigir (urgente)", "rentabilizar antes de crescer"),
+    "RCG": ("Aposta seletiva", "crescer em nichos com controle de acumulação"),
+    "Garantia": ("Opcional", "só via parceria ou nicho específico"),
+    "Empresarial": ("Opcional", "só se reduzir o custo comercial via digital"),
 }
 
 
 def _q12(c: _Ctx) -> dict:
     pergunta = "Em qual LOB a Akad deveria focar nos próximos anos? Qual deve ser a estratégia?"
-    if not c.tem_fase:
-        return _item(
-            "12",
-            pergunta,
-            "A fase Akad começa em 2022. Selecione pelo menos um ano de 2022 em diante.",
-            "A marca Akad foi criada em junho de 2022, depois da compra pela GP em 2021. "
-            "A série de 2020–2021 é a operação Argo; sem anos de 2022 em diante, não há base "
-            "para recomendar foco com a estratégia atual. Volte o filtro para 2022–2025.",
-        )
     fase = c.fase
     lobs = [l for l in c.lobs if not fase[(fase["lob"] == l) & (fase["codigo_susep"] == AKAD)].empty]
     if not lobs:
@@ -815,112 +968,104 @@ def _q12(c: _Ctx) -> dict:
             l, f"{_pct(d['s0'])} → {_pct(d['s1'])}",
             f"{_pct(d['mg_a'])} vs {_pct(d['mg_m'])}",
             f"{_pct(d['sin_a'])} vs {_pct(d['sin_m'])}",
-            A.f_mi(d["lucro_a"]), _pct(d["mix"], 0), f"**{papel}**: {acao}",
+            A.f_din(d["lucro_a"]), _pct(d["mix"], 0), f"**{papel}**: {acao}",
         ])
     tabela = _tabela(
         ["LOB", "Share", "Margem Akad vs mercado", "Sinistr. Akad vs mercado",
-         "Resultado técnico da Akad", f"% do prêmio da Akad em {c.f1}", "Papel"],
+         "Resultado técnico Akad", f"% do prêmio em {c.f1}", "Papel estratégico"],
         linhas,
         esq={0, 6},
     )
 
     curta = (
-        "Focar em E&O (defender e expandir), corrigir a rentabilidade de Transportes, tratar RCG como "
-        "aposta seletiva e manter Garantia e Empresarial como opcionais."
+        "Focar em E&O como núcleo de crescimento, corrigir urgentemente a rentabilidade de Transportes, "
+        "crescer seletivamente em RCG e manter Garantia e Empresarial como opcionais."
     )
 
-    partes = [f"**Base da recomendação:** fase Akad ({c.fase_rotulo}), porque a marca e a estratégia atuais começam em 2022.", tabela]
+    partes = [
+        f"**Base da decisão:** olhamos a fase Akad (**{c.fase_rotulo}**), pois a estratégia atual nasce após "
+        "a compra pela GP (2021) e a troca de marca (junho de 2022).",
+        tabela,
+    ]
 
     def d(l: str) -> dict | None:
         return dados.get(l)
 
-    eo = d("E&O")
+    eo, tr = d("E&O"), d("Transportes")
     if eo:
-        fatos_eo = []
-        if c.lob["margem"].idxmax() == "E&O":
-            fatos_eo.append(f"a LOB de maior margem do mercado ({_pct(c.lob.loc['E&O', 'margem'])})")
-        if not c.cresc.empty and "E&O" in c.cresc.index and c.cresc["pct"].idxmax() == "E&O":
-            fatos_eo.append(f"a que mais cresce em porcentagem ({_pct(c.cresc.loc['E&O', 'pct'])})")
         txt = (
-            f"**Por que E&O.** É a LOB em que a Akad já lidera ({_pct(eo['s1'])} de share em {c.f1}), com margem "
-            f"de {_pct(eo['mg_a'])} contra {_pct(eo['mg_m'])} do mercado e sinistralidade de "
-            f"{_pct(eo['sin_a'])} contra {_pct(eo['sin_m'])}."
-            + (f" É também {_lista(fatos_eo)}." if fatos_eo else "")
-            + " "
+            f"**1. E&O — Núcleo (defender e expandir o mercado):** a Akad já é líder ({_pct(eo['s1'])} em {c.f1}), "
+            f"com margem de **{_pct(eo['mg_a'])}** (vs {_pct(eo['mg_m'])} do mercado) e sinistralidade controlada "
+            f"({_pct(eo['sin_a'])} vs {_pct(eo['sin_m'])})."
         )
-        tr = d("Transportes")
         if tr and tr["premio_a"] > 0 and eo["premio_a"] > 0:
             txt += (
-                f"No período, E&O deu à Akad {A.f_din(eo['lucro_a'])} de resultado técnico com "
-                f"{A.f_din(eo['premio_a'])} de prêmio; Transportes deu {A.f_din(tr['lucro_a'])} com "
-                f"{A.f_din(tr['premio_a'])}."
+                f" Em {c.fase_rotulo}, E&O gerou **{A.f_din(eo['lucro_a'])}** de resultado técnico com "
+                f"{A.f_din(eo['premio_a'])} de prêmio — quase 3× o resultado de Transportes "
+                f"({A.f_din(tr['lucro_a'])}), que precisou de {A.f_din(tr['premio_a'])} de prêmio!"
             )
         partes.append(txt)
         partes.append(
-            "**Ressalvas de E&O (o que a banca deve cobrar).** "
-            f"(1) A vantagem de margem vem sobretudo do resseguro (contribui com {A.f_pp(eo['k']['resseg'])}) e pouco da "
-            f"sinistralidade (contribui com {A.f_pp(eo['k']['sin'])}): a Akad cede pouco risco, o que rende mais nos anos "
-            "bons mas exige mais capital e aumenta a volatilidade. "
-            "(2) Em uma carteira jovem, que cresce rápido e é de cauda longa, a sinistralidade recente pode subestimar o "
-            "custo final; vale validar a suficiência das reservas. "
-            f"(3) O mercado é pequeno ({A.f_bi(c.premio_ano('E&O', c.f1))} em {c.f1}) e a Akad já tem {_pct(eo['s1'], 0)} dele: "
-            "o teto de crescimento orgânico é baixo, então expandir exige aumentar o mercado "
-            "(novas profissões e segmentos, PMEs, riscos cibernéticos) e não apenas tomar share."
+            "**3 pontos de atenção em E&O (para antecipar perguntas críticas):**\n"
+            f"- **Resseguro e capital:** a vantagem de margem vem sobretudo de ceder pouco risco "
+            f"(resseguro contribui com {A.f_pp(eo['k']['resseg'])}; sinistralidade com {A.f_pp(eo['k']['sin'])}). "
+            "É preciso monitorar solvência e apetite de risco.\n"
+            "- **Cauda longa:** em carteiras jovens que crescem rápido, sinistros podem demorar anos para aparecer — "
+            "validar periodicamente a suficiência das reservas.\n"
+            f"- **Teto de mercado:** E&O ainda é pequena ({A.f_bi(c.premio_ano('E&O', c.f1))} em {c.f1}) e a Akad já "
+            f"tem {_pct(eo['s1'], 0)}. Crescer exige **criar mercado** (novas profissões, PMEs digitais, cross-sell "
+            "com Cyber), não apenas brigar por share."
         )
 
-    tr = d("Transportes")
     if tr:
         partes.append(
-            f"**Transportes: corrigir, não crescer.** A Akad subiu para {_pct(tr['s1'])} de share, mas a margem na fase é "
-            f"{_pct(tr['mg_a'])} contra {_pct(tr['mg_m'])} do mercado. A diferença de {A.f_pp(tr['k']['total'])} vem de "
-            f"sinistralidade ({A.f_pp(tr['k']['sin'])}) e despesa comercial ({A.f_pp(tr['k']['com'])}), parcialmente "
-            f"compensadas pelo resseguro ({A.f_pp(tr['k']['resseg'])}); são contribuições à margem. Como Transportes é {_pct(tr['mix'], 0)} do prêmio da "
-            "Akad em " + str(c.f1) + ", a rentabilidade dessa LOB define o resultado da empresa. "
-            "Ações: reprecificação por segmento e rota, gestão de sinistros e prevenção (roubo e acidente), "
-            "revisão da política de comissão e do mix de clientes e uso do resseguro para limitar perdas grandes."
+            f"**2. Transportes — Corrigir antes de crescer:** representa **{_pct(tr['mix'], 0)}** do prêmio da Akad "
+            f"em {c.f1}, mas a margem na fase caiu para **{_pct(tr['mg_a'])}** (vs {_pct(tr['mg_m'])} do mercado). "
+            f"A diferença ({A.f_pp(tr['k']['total'])}) vem de **sinistralidade ({A.f_pp(tr['k']['sin'])})** e "
+            f"**despesa comercial ({A.f_pp(tr['k']['com'])})**, parcialmente aliviadas pelo resseguro "
+            f"({A.f_pp(tr['k']['resseg'])}). Como essa LOB domina o faturamento, recuperar margem aqui é o que "
+            "mais move o resultado total: reprecificar por rota/carga, investir em gestão de risco/antifraude, "
+            "revisar comissões e cortar segmentos deficitários."
         )
 
     rcg = d("RCG")
     if rcg:
         vol_rcg = c.trend.loc["RCG", "vol"] if "RCG" in c.trend.index else math.nan
         partes.append(
-            f"**RCG: aposta seletiva.** Share pequeno ({_pct(rcg['s1'])}), mas margem de {_pct(rcg['mg_a'])} contra "
-            f"{_pct(rcg['mg_m'])} do mercado e sinistralidade de {_pct(rcg['sin_a'])} contra {_pct(rcg['sin_m'])}. "
-            "O risco é que o mercado é volátil"
-            + (f" (desvio anual de {_pct(vol_rcg)} na sinistralidade)" if not _nan(vol_rcg) else "")
-            + ": crescer em nichos, com limites de acumulação e resseguro para perdas grandes."
+            f"**3. RCG — Aposta seletiva:** ainda pequena ({_pct(rcg['s1'])} de share), mas muito rentável "
+            f"({_pct(rcg['mg_a'])} vs {_pct(rcg['mg_m'])} do mercado) e com sinistralidade bem menor "
+            f"({_pct(rcg['sin_a'])} vs {_pct(rcg['sin_m'])}). Como o mercado é volátil"
+            + (f" (desvio anual de {_pct(vol_rcg)})" if not _nan(vol_rcg) else "")
+            + ", a estratégia é crescer em nichos selecionados com limites rígidos de acumulação e resseguro."
         )
 
     gar, emp = d("Garantia"), d("Empresarial")
     if gar or emp:
-        txt = "**Garantia e Empresarial: opcionais.** "
+        itens_op = []
         if gar:
-            lider_lucro = c.lob["lucro"].idxmax() == "Garantia"
-            txt += (
-                f"Garantia {'tem o maior resultado técnico do mercado' if lider_lucro else 'gera'} "
-                f"({A.f_bi(c.lob.loc['Garantia', 'lucro'])}), mas a Akad tem "
-                f"{_pct(gar['s1'])} e margem de {_pct(gar['mg_a'])} contra {_pct(gar['mg_m'])}; o principal fator é "
-                f"{_driver(gar['k'])}. Só vale entrar com parceria ou nicho. "
+            itens_op.append(
+                f"**Garantia ({_pct(gar['s1'])} de share):** mercado grande e lucrativo, mas a Akad opera abaixo "
+                f"({_pct(gar['mg_a'])} vs {_pct(gar['mg_m'])}), puxada por {_driver(gar['k'])}. Só entrar com nicho/parceria."
             )
         if emp:
-            txt += (
-                f"Em Empresarial a Akad tem {_pct(emp['s1'])} e margem de {_pct(emp['mg_a'])} contra {_pct(emp['mg_m'])}; "
-                f"o principal fator é {_driver(emp['k'])}, ou seja, o custo de distribuir um produto novo e pequeno. "
-                "Só faz sentido com um canal digital de PMEs de custo menor."
+            itens_op.append(
+                f"**Empresarial ({_pct(emp['s1'])} de share):** margem baixa ({_pct(emp['mg_a'])} vs {_pct(emp['mg_m'])}) "
+                f"puxada por {_driver(emp['k'])} (custo de distribuição alto de produto novo). Só escalar via canal digital "
+                "de PMEs com comissão menor."
             )
-        partes.append(txt)
+        partes.append("**4. Garantia e Empresarial — Opcionais:**\n" + "\n".join(f"- {x}" for x in itens_op))
 
     partes.append(
-        "**Estratégia.** (1) Canais: manter o corretor como parceiro e usar a tecnologia da Akad (cotação e emissão "
-        "digitais) para baixar o custo comercial onde ele pesa, em Empresarial e Transportes. (2) Subscrição e preço: "
-        "dados e modelos para precificar por segmento, começando por Transportes. (3) Sinistros: regulação mais "
-        "rápida e antifraude. (4) Resseguro: reavaliar a retenção em E&O (capital) e o custo da cessão em Garantia. "
-        "(5) Infraestrutura e capital: garantir solvência para sustentar a retenção em E&O e o crescimento seletivo."
+        "**5 alavancas transversais de execução:**\n"
+        "- **Canais de venda:** manter o corretor no centro, usando plataforma digital/APIs para baratear aquisição em Empresarial e Transportes.\n"
+        "- **Pricing e subscrição:** modelos granulares por rota, segmento e perfil de risco.\n"
+        "- **Gestão de sinistros:** prevenção a roubos/acidentes em Transportes e regulação ágil.\n"
+        "- **Resseguro:** calibrar retenção em E&O (proteção de capital) e custo de cessão em Garantia.\n"
+        "- **Infraestrutura e capital:** sustentar solvência para o crescimento em E&O e RCG."
     )
     partes.append(
-        "**Limites da análise.** Valores nominais; resultado técnico não é lucro contábil (sem despesa administrativa, "
-        "imposto e resultado financeiro); o SES mostra o que aconteceu, não por quê. A recomendação é um julgamento a "
-        "validar com dados internos de preço, comissão por canal e tratados de resseguro."
+        "**Limites da análise:** dados nominais do SES (sem despesas administrativas, impostos e resultado financeiro). "
+        "As ações devem ser validadas com dados internos de preço, comissionamento por canal e tratados de resseguro."
     )
     return _item("12", pergunta, curta, "\n\n".join(partes))
 
@@ -933,7 +1078,7 @@ def gerar(base: pd.DataFrame) -> list[dict]:
     """Q1–Q12 para a base recebida (já filtrada por LOB e ano)."""
     if base.empty:
         return [
-            {"n": f"{i:02d}", "pergunta": "", "curta": "Sem dados.", "resposta": "Sem dados."}
+            {"n": f"{i:02d}", "pergunta": "", "curta": "Sem dados.", "corpo": "Sem dados.", "resposta": "Sem dados."}
             for i in range(1, 13)
         ]
     c = _Ctx(base)

@@ -28,6 +28,8 @@ hr{border-color:var(--rule);}
 .small{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);}
 .nota{background:#F4F5FD;border-left:3px solid var(--lilac);padding:12px 14px;margin:10px 0;max-width:82ch;}
 .nota p{margin:0;font-family:'IBM Plex Sans','Segoe UI',sans-serif;font-size:15px;line-height:1.55;color:var(--charcoal);}
+.resp-curta{background:#FFF4F8;border-left:4px solid var(--akad);padding:11px 14px;border-radius:0 8px 8px 0;margin:6px 0 14px;font-size:15.5px;line-height:1.5;color:var(--navy);}
+.resp-badge{display:inline-block;background:var(--akad);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;margin-right:8px;vertical-align:middle;}
 .stButton > button[kind="primary"]{background:var(--akad);border-color:var(--akad);}
 .stButton > button[kind="primary"]:hover{background:var(--akad-dark);border-color:var(--akad-dark);}
 .stButton > button:disabled{opacity:.45;}

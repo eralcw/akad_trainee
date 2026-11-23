@@ -643,22 +643,30 @@ def _akad(base_f: pd.DataFrame, resp: list[dict]) -> None:
 def _respostas(resp: list[dict]) -> None:
     st.markdown("#### Respostas do case")
     st.caption(
-        "Os números são recalculados com os filtros atuais. O contexto de marca (Q10) e a recomendação da "
-        "Q12 são julgamento, não resultado automático. Para a leitura completa, deixe o filtro em 2020–2025."
+        "Os números e análises são recalculados com os filtros atuais. O contexto de marca (Q10) e a recomendação da "
+        "Q12 são julgamento de negócio, não resultado automático. Para a leitura completa, deixe o filtro em 2020–2025."
     )
-    texto = []
-    for item in resp:
-        st.markdown(f"### {item['n']} · {item['pergunta']}")
-        st.markdown(item["resposta"])
-        texto.append(f"## {item['n']} · {item['pergunta']}\n\n{item['resposta']}\n")
-        st.divider()
+    texto = [f"## {item['n']} · {item['pergunta']}\n\n{item['resposta']}\n" for item in resp]
     st.download_button(
         "Baixar respostas em Markdown",
         "\n".join(texto),
         file_name="respostas_akad.md",
         mime="text/markdown",
     )
-    st.caption("O roteiro completo, com mercado 101 e leitura de cada gráfico, é um documento local e não versionado.")
+    for item in resp:
+        with st.container(border=True):
+            st.markdown(
+                f'<span class="resp-badge">Q{html_lib.escape(item["n"])}</span>'
+                f'<strong>{html_lib.escape(item["pergunta"])}</strong>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f'<div class="resp-curta"><strong>Resposta direta:</strong> {html_lib.escape(item["curta"])}</div>',
+                unsafe_allow_html=True,
+            )
+            corpo = item.get("corpo") or item["resposta"]
+            st.markdown(corpo)
+    st.caption("O roteiro completo, com mercado 101 e leitura de cada gráfico, é um documento local em `analise/roteiro_apresentacao.html`.")
 
 
 # --------------------------------------------------------------------------
