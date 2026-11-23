@@ -32,9 +32,10 @@ def test_periodo_completo(base):
     _sem_lixo(itens)
     lob = A.por_lob(base).set_index("lob")
     assert lob.index[0] in itens[0]["curta"]
-    assert A.f_bi(lob["premio"].max()) in itens[0]["curta"]
+    assert "bilhões" in itens[0]["curta"]
     assert A.f_pct(lob["sinistralidade"].max()) in itens[2]["curta"]
-    assert A.f_bi(lob["lucro"].max()) in itens[4]["curta"]
+    assert lob["lucro"].idxmax() in itens[4]["curta"]
+    assert "bilhões" in itens[4]["curta"]
 
 
 def test_q2_nao_repete_lob_quando_lider_e_o_mesmo(base):
@@ -115,3 +116,21 @@ def test_sem_texto_de_maquina(base):
         baixo = q["resposta"].lower()
         for p in proibidos:
             assert p not in baixo, (q["n"], p)
+
+
+def test_sem_topicos_nem_abreviacoes_fora_das_tabelas(base):
+    abreviacoes = re.compile(r"\b(bi|mi|pp)\b")
+    for q in R.gerar(base):
+        for linha in q["resposta"].splitlines():
+            texto = linha.strip()
+            if not texto or texto.startswith("|") or texto.startswith("_"):
+                continue
+            assert not texto.startswith("- "), (q["n"], texto[:60])
+            assert not abreviacoes.search(texto), (q["n"], abreviacoes.search(texto).group(0), texto[:60])
+
+
+def test_primeira_frase_tem_sujeito_e_verbo(base):
+    for q in R.gerar(base):
+        primeira = q["curta"].strip()
+        assert primeira[:1].isupper(), (q["n"], primeira[:40])
+        assert any(v in primeira.lower() for v in (" é ", " tem ", " foram ", " somaram ", " lidera ", " ficou ", " passou ", " cresceu ", " deveria ")), (q["n"], primeira[:60])

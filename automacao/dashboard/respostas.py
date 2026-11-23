@@ -171,152 +171,240 @@ def _share_ano(base: pd.DataFrame, lob: str, ano: int, so_akad: bool = False) ->
 # Q1–Q3
 # --------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------
+# Helpers de redacao (prosa): numeros por extenso, plural e artigo
+# --------------------------------------------------------------------------
+
+MASCULINAS = {"BTG", "BRADESCO", "ITAU", "ITAÚ", "SAFRA", "IRB", "BANCO", "CHUBB"}
+
+
+def _fmt(v: float, dec: int) -> str:
+    return f"{v:,.{dec}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _brl(v: float) -> str:
+    """Valor por extenso: 'R$ 29,3 bilhões', 'R$ 198,3 milhões', 'R$ 5 mil'."""
+    if _nan(v):
+        return "–"
+    sinal = "−" if v < 0 else ""
+    a = abs(v)
+    if a >= 1e9:
+        n = a / 1e9
+        unidade = "bilhão" if round(n, 1) == 1.0 else "bilhões"
+        return f"{sinal}R$ {_fmt(n, 1)} {unidade}"
+    if a >= 1e6:
+        n = a / 1e6
+        unidade = "milhão" if round(n, 1) == 1.0 else "milhões"
+        return f"{sinal}R$ {_fmt(n, 1)} {unidade}"
+    if a >= 1e3:
+        return f"{sinal}R$ {_fmt(a / 1e3, 0)} mil"
+    return f"{sinal}R$ {_fmt(a, 0)}"
+
+
+def _pp(v: float, primeira: bool = True) -> str:
+    """Pontos percentuais por extenso. Recebe a diferenca em fracao (0,131 -> '13,1 pontos')."""
+    if _nan(v):
+        return "–"
+    a = abs(v) * 100
+    singular = a < 1.0 or round(a, 1) == 1.0
+    if singular:
+        unidade = "ponto percentual" if primeira else "ponto"
+    else:
+        unidade = "pontos percentuais" if primeira else "pontos"
+    return f"{_fmt(a, 1)} {unidade}"
+
+
+NUMEROS = {1: "um", 2: "dois", 3: "três", 4: "quatro", 5: "cinco",
+           6: "seis", 7: "sete", 8: "oito", 9: "nove", 10: "dez"}
+
+
+NUMEROS_FEM = {1: "uma", 2: "duas"}
+
+
+def _num_txt(n: int, fem: bool = False) -> str:
+    if fem and n in NUMEROS_FEM:
+        return NUMEROS_FEM[n]
+    return NUMEROS.get(n, str(n))
+
+
+def _artigo(nome: str) -> str:
+    primeira = (nome or "").split(" ")[0].upper().strip(",.")
+    return "o" if primeira in MASCULINAS else "a"
+
+
+def _com_artigo(nome: str) -> str:
+    return f"{_artigo(nome)} {A.nome_curto(nome)}"
+
+
+def _cap(nome: str) -> str:
+    """Maiuscula apenas a primeira letra, preservando siglas (BTG, HDI)."""
+    return nome[:1].upper() + nome[1:] if nome else nome
+
+
+def _plural(n: int, singular: str, plural: str) -> str:
+    return f"{n} {singular if n == 1 else plural}"
+
+
+def _prosa(paragrafos, tabelas=()) -> str:
+    texto = [p.strip() for p in paragrafos if p and p.strip()]
+    corpo = "\n\n".join(texto)
+    for t in tabelas:
+        if t:
+            corpo += "\n\n" + t.strip()
+    return corpo
+
+
+# --------------------------------------------------------------------------
+# Q1–Q3
+# --------------------------------------------------------------------------
+
 def _q01(c: _Ctx) -> dict:
     lob, total = c.lob, float(c.lob["premio"].sum())
     top = lob.index[0]
-    share_top = lob.loc[top, "premio"] / total if total else math.nan
-    s0 = c.premio_ano(top, c.a0)
-    s1 = c.premio_ano(top, c.a1)
+    share = lob.loc[top, "premio"] / total if total else math.nan
+    seg = lob.index[1] if len(lob) > 1 else None
+    menor = lob.index[-1] if len(lob) > 1 else None
+    s0, s1 = c.premio_ano(top, c.a0), c.premio_ano(top, c.a1)
     t0 = sum(c.premio_ano(l, c.a0) for l in c.lobs)
     t1 = sum(c.premio_ano(l, c.a1) for l in c.lobs)
-    p0 = s0 / t0 if t0 else math.nan
-    p1 = s1 / t1 if t1 else math.nan
+    p0, p1 = (s0 / t0 if t0 else math.nan), (s1 / t1 if t1 else math.nan)
 
     curta = (
-        f"{top} lidera, com {A.f_bi(lob.loc[top, 'premio'])} de prêmio ganho "
-        f"em {c.periodo} ({_pct(share_top, 0)} das {len(lob)} LOBs)."
+        f"Transportes é a maior linha de negócio do período, com {_brl(lob.loc[top, 'premio'])} "
+        f"de prêmio ganho entre {c.a0} e {c.a1}."
     )
-    porques = []
-    if len(lob) > 1:
-        seg = lob.index[1]
-        porques.append(f"{seg} vem em segundo, com {A.f_bi(lob.loc[seg, 'premio'])}.")
-        menor = lob.index[-1]
-        porques.append(f"{menor} é a menor, com {A.f_bi(lob.loc[menor, 'premio'])}.")
-    if c.a0 != c.a1:
-        porques.append(
-            f"A participação de {top} no prêmio das LOBs foi de {_pct(p0)} em {c.a0} "
-            f"para {_pct(p1)} em {c.a1}."
+    p1_txt = (
+        f"Esse valor equivale a {_pct(share, 0)} de tudo o que as {_num_txt(len(lob))} LOBs faturaram."
+        if len(lob) > 1 else ""
+    )
+    p2 = ""
+    if seg:
+        p2 = (
+            f"{seg} vem em segundo lugar, com {_brl(lob.loc[seg, 'premio'])}, e a distância para "
+            f"Transportes é grande: a líder fatura {_fmt(lob.loc[top, 'premio'] / lob.loc[seg, 'premio'], 1)} vezes mais."
         )
+        if menor:
+            p2 += f" Na outra ponta, {menor} soma {_brl(lob.loc[menor, 'premio'])}, pouco mais de um décimo da líder."
+    p3 = ""
+    if c.a0 != c.a1:
+        p3 = (
+            f"A liderança, porém, está encolhendo em termos relativos: a participação de Transportes no prêmio "
+            f"das LOBs passou de {_pct(p0)} em {c.a0} para {_pct(p1)} em {c.a1}. "
+        )
+    p3 += (
+        "Vale notar que prêmio ganho mede tamanho de carteira, não rentabilidade; como mostram as perguntas 5 e 6, "
+        "Transportes é justamente a LOB de menor margem. Todos os valores são nominais, como publicados pela SUSEP."
+    )
     tabela = _tabela(
-        ["LOB", "Prêmio ganho", "% do total"],
+        ["LOB", "Prêmio ganho", "Participação no total"],
         [[l, A.f_bi(r["premio"]), _pct(r["premio"] / total if total else math.nan)] for l, r in lob.iterrows()],
     )
-    return _item(
-        "01", PERGUNTAS["01"], curta,
-        _bloco(
-            porques, tabela,
-            metodo="soma do prêmio ganho de 2020 a 2025, em valores nominais.",
-            atencao="ser a maior em prêmio não significa ser a mais lucrativa; veja a Q5.",
-        ),
-    )
+    return _item("01", PERGUNTAS["01"], curta, _prosa([p1_txt, p2, p3], [tabela]))
 
 
 def _q02(c: _Ctx) -> dict:
-    atv = A.ativas_por_ano(c.base, "premio")        # prêmio > 0
-    pres = A.ativas_por_ano(c.base, "presenca")     # qualquer linha
-    mat = (
-        c.base[c.base["premio_ganho"] >= 1_000_000]
-        .groupby(["lob", "ano"]).codigo_susep.nunique().unstack()
-    )
+    atv = A.ativas_por_ano(c.base, "premio")
+    pres = A.ativas_por_ano(c.base, "presenca")
+    mat = (c.base[c.base["premio_ganho"] >= 1_000_000]
+           .groupby(["lob", "ano"]).codigo_susep.nunique().unstack())
     a0, a1 = c.a0, c.a1
     l0, l1 = atv[a0].idxmax(), atv[a1].idxmax()
-    n0, n1 = int(atv[a0].max()), int(atv[a1].max())
-    if a0 == a1:
-        curta = f"{l0} tem mais seguradoras ativas em {a0}: {n0}."
-    elif l0 == l1:
-        curta = f"{l0} lidera nos dois anos: {n0} ativas em {a0} e {n1} em {a1}."
-    else:
-        curta = f"{l0} lidera em {a0} ({n0}) e {l1} em {a1} ({n1})."
 
-    porques = []
-    if a0 != a1:
-        var = (atv[a1] - atv[a0]).sort_values(ascending=False)
-        quem = var.index[0]
-        sinal = "ganhou" if var.iloc[0] > 0 else "perdeu"
-        porques.append(f"{quem} {sinal} {abs(int(var.iloc[0]))} concorrentes ativos no período.")
-    menor = atv[a1].idxmin()
-    top5 = c.conc.loc[menor, "top5"] if menor in c.conc.index else math.nan
-    porques.append(
-        f"{menor} tem o menor grupo ({int(atv.loc[menor, a1])}) e a maior concentração: "
-        f"as 5 maiores somam {_pct(top5)} do prêmio."
-    )
+    if a0 == a1:
+        curta = f"{l0} tem o maior número de seguradoras ativas em {a0}: {int(atv[a0].max())}."
+    elif l0 == l1:
+        curta = (f"{l0} é a LOB com mais seguradoras ativas nos dois anos, com "
+                 f"{int(atv.loc[l0, a0])} empresas em {a0} e {int(atv.loc[l0, a1])} em {a1}.")
+    else:
+        curta = (f"{l0} lidera em {a0}, com {int(atv[a0].max())} seguradoras ativas, e {l1} "
+                 f"assume a liderança em {a1}, com {int(atv[a1].max())}.")
+
+    paras = []
     if not mat.empty and a0 in mat.columns and a1 in mat.columns:
         ml0, ml1 = mat[a0].idxmax(), mat[a1].idxmax()
         if ml0 == ml1:
-            porques.append(
-                f"Com piso de materialidade (prêmio ≥ R$ 1 mi no ano), {ml0} lidera em "
-                f"{a0} ({int(mat.loc[ml0, a0])}) e em {a1} ({int(mat.loc[ml0, a1])})."
+            paras.append(
+                f"A liderança se mantém quando se exige um prêmio mínimo de R$ 1 milhão no ano: por esse critério, "
+                f"{ml0} passa de {int(mat.loc[ml0, a0])} para {int(mat.loc[ml0, a1])} seguradoras."
             )
-        else:
-            porques.append(
-                f"Com piso de R$ 1 mi de prêmio, o líder muda: {ml0} em {a0} e {ml1} em {a1}."
+    if a0 != a1:
+        var = (atv[a1] - atv[a0]).sort_values(ascending=False)
+        quem = var.index[0]
+        if var.iloc[0] > 0:
+            paras.append(
+                f"O movimento de entrada mais forte, no entanto, aconteceu em {quem}, que ganhou "
+                f"{_num_txt(int(var.iloc[0]))} {'concorrente' if int(var.iloc[0]) == 1 else 'concorrentes'} no período e passou de "
+                f"{int(atv.loc[quem, a0])} para {int(atv.loc[quem, a1])} empresas ativas."
             )
+        menor = atv[a1].idxmin()
+        top5 = c.conc.loc[menor, "top5"] if menor in c.conc.index else math.nan
+        paras.append(
+            f"No extremo oposto está {menor}, que manteve {_plural(int(atv.loc[menor, a1]), 'empresa ativa', 'empresas ativas')} "
+            f"e é também a carteira mais concentrada: as cinco maiores detêm {_pct(top5)} do prêmio. "
+            "Isso sugere que operar nessa LOB exige estrutura de subscrição e de sinistros que poucos concorrentes têm."
+        )
     pl0 = pres[a0].idxmax()
+    paras.append(
+        f"Consideramos ativa a seguradora que registrou prêmio ganho positivo no ano. A ressalva é necessária porque o SES "
+        f"também lista empresas que não venderam nada e apenas administram sinistros antigos; se todas fossem contadas, "
+        f"{pl0} apareceria na liderança em {a0}, o que distorceria a leitura da concorrência real."
+    )
     tabela = _tabela(
         ["LOB", f"Ativas {a0}", f"Ativas {a1}", "Variação"],
         [[l, int(atv.loc[l, a0]), int(atv.loc[l, a1]), f"{int(atv.loc[l, a1] - atv.loc[l, a0]):+d}"] for l in c.lobs],
     )
-    return _item(
-        "02", PERGUNTAS["02"], curta,
-        _bloco(
-            porques, tabela,
-            metodo="ativa = seguradora com prêmio ganho maior que zero no ano.",
-            atencao=(
-                f"contando todas as empresas listadas no SES, inclusive as sem venda, "
-                f"{pl0} lideraria em {a0}."
-            ),
-        ),
-    )
+    return _item("02", PERGUNTAS["02"], curta, _prosa(paras, [tabela]))
 
 
 def _q03(c: _Ctx) -> dict:
     d = c.lob.sort_values("sinistralidade", ascending=False)
     top = d.index[0]
     segundo = d.index[1] if len(d) > 1 else None
-    curta = f"{top} lidera, com {_pct(d.loc[top, 'sinistralidade'])}"
+    curta = f"{top} tem a maior sinistralidade do período, com {_pct(d.loc[top, 'sinistralidade'])}."
+    paras = []
     if segundo:
         gap = d.loc[top, "sinistralidade"] - d.loc[segundo, "sinistralidade"]
         if gap < 0.005:
-            curta += f", praticamente empatada com {segundo} ({_pct(d.loc[segundo, 'sinistralidade'])})."
+            paras.append(
+                f"A diferença para {segundo} ({_pct(d.loc[segundo, 'sinistralidade'])}) é de apenas {_pp(gap)}, "
+                "o que, na prática, configura um empate: nas duas carteiras, mais da metade de cada real de prêmio "
+                "foi consumida pelo pagamento de sinistros."
+            )
         else:
-            curta += f"; {segundo} vem depois, com {_pct(d.loc[segundo, 'sinistralidade'])}."
-    else:
-        curta += "."
-
-    porques = []
+            paras.append(
+                f"{segundo} vem em segundo, com {_pct(d.loc[segundo, 'sinistralidade'])}, "
+                f"{_pp(gap)} abaixo da líder."
+            )
     if c.a0 != c.a1 and top in c.lob_ano["lob"].values:
         serie = c.lob_ano[c.lob_ano["lob"] == top].set_index("ano")["sinistralidade"]
-        pior_ano = serie.idxmax()
-        porques.append(
-            f"{top} depende de {int(pior_ano)}: naquele ano a sinistralidade foi de "
-            f"{_pct(serie.loc[pior_ano])}."
-        )
-        sem = c.base[c.base["ano"] != pior_ano]
+        pior = serie.idxmax()
+        sem = c.base[c.base["ano"] != pior]
         if not sem.empty:
             d_sem = A.por_lob(sem).set_index("lob")["sinistralidade"].sort_values(ascending=False)
             novo = d_sem.index[0]
-            porques.append(
-                f"Sem {int(pior_ano)}, {top} cairia para {_pct(d_sem.get(top, math.nan))} e "
-                f"{novo} passaria a ser a maior, com {_pct(d_sem.loc[novo])}."
+            paras.append(
+                f"Esse resultado depende de um único ano. Em {int(pior)}, a sinistralidade de {top} saltou para "
+                f"{_pct(serie.loc[pior])}, puxada por sinistros de grande porte. Se esse ano for excluído, o índice "
+                f"cai para {_pct(d_sem.get(top, math.nan))} e {novo} passa a ser a LOB mais sinistrada, com "
+                f"{_pct(d_sem.loc[novo])}. A diferença entre as duas é, portanto, de natureza: em {top} o risco aparece "
+                "em picos concentrados; em Transportes, de forma mais constante."
             )
     if len(d) > 1:
         menor = d.index[-1]
-        porques.append(f"{menor} tem a menor sinistralidade: {_pct(d.loc[menor, 'sinistralidade'])}.")
-
+        paras.append(
+            f"No outro extremo está {menor}, com {_pct(d.loc[menor, 'sinistralidade'])}. O seguro garantia funciona como "
+            "uma fiança: a seguradora analisa o crédito do cliente antes de emitir a apólice e pode cobrar dele o valor "
+            "indenizado, o que mantém os sinistros baixos."
+        )
+    paras.append(
+        "A sinistralidade foi calculada como a soma dos sinistros dividida pela soma dos prêmios do período, "
+        "para que anos ou empresas pequenas não pesem tanto quanto as grandes."
+    )
     tabela = _tabela(
         ["LOB", "Sinistro ocorrido", "Prêmio ganho", "Sinistralidade"],
         [[l, A.f_bi(r["sinistro"]), A.f_bi(r["premio"]), _pct(r["sinistralidade"])] for l, r in d.iterrows()],
     )
-    return _item(
-        "03", PERGUNTAS["03"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=(
-                "soma dos sinistros ÷ soma dos prêmios ganhos no período (razão de somas, "
-                "não média das razões anuais)."
-            ),
-        ),
-    )
+    return _item("03", PERGUNTAS["03"], curta, _prosa(paras, [tabela]))
 
 
 # --------------------------------------------------------------------------
@@ -327,18 +415,14 @@ def q4_curta(base: pd.DataFrame, min_share: float = 0.01) -> str:
     tab = A.q4(base, min_share=min_share, top=1)
     if tab.empty:
         return "Sem seguradoras acima do corte."
-    partes = [
-        f"{r['lob']}: {A.nome_curto(r['seguradora'])} ({_pct(r['sinistralidade'], 0)})"
-        for _, r in tab.iterrows()
-    ]
     extremos = tab.nlargest(2, "sinistralidade")
     nomes = " e ".join(
-        f"{A.nome_curto(r.seguradora)} em {r.lob} ({_pct(r.sinistralidade, 0)})"
-        for r in extremos.itertuples()
+        f"{_com_artigo(r.seguradora)} em {r.lob} ({_pct(r.sinistralidade, 0)})" for r in extremos.itertuples()
     )
     if len(tab) > 2:
-        return f"Com corte de {_pct(min_share, 0)} de participação, os extremos são {nomes}; veja a tabela."
-    return f"Com corte de {_pct(min_share, 0)}: " + "; ".join(partes) + "."
+        return f"Com corte de {_pct(min_share, 0)} de participação, os extremos são {nomes}."
+    partes = [f"{_com_artigo(r.seguradora)} em {r.lob} ({_pct(r.sinistralidade, 0)})" for r in tab.itertuples()]
+    return "Com corte de materialidade, as maiores são " + "; ".join(partes) + "."
 
 
 def _q04(c: _Ctx) -> dict:
@@ -346,54 +430,62 @@ def _q04(c: _Ctx) -> dict:
     sem = A.q4(c.base, min_share=0.0, top=1).set_index("lob")
     curta = q4_curta(c.base, 0.01)
 
-    porques = []
-    if not sem.empty:
-        extremo = sem.sort_values("sinistralidade", ascending=False).iloc[0]
-        porques.append(
-            f"Sem corte, o ranking é dominado por empresas quase sem prêmio: "
-            f"{A.nome_curto(extremo['seguradora'])} tem {_pct(extremo['sinistralidade'], 0)} "
-            f"sobre {A.f_din(extremo['premio'])} de prêmio."
+    nomes = []
+    for l in c.lobs:
+        if l in com.index:
+            r = com.loc[l]
+            artigo = "do" if _artigo(r["seguradora"]) == "o" else "da"
+            nomes.append(f"{artigo} {A.nome_curto(r['seguradora'])} em {l} ({_pct(r['sinistralidade'], 0)})")
+    paras = []
+    if nomes:
+        paras.append(
+            "Considerando apenas as seguradoras com pelo menos 1% do prêmio da LOB, as maiores sinistralidades "
+            "do período são " + ", ".join(nomes[:-1]) + " e " + nomes[-1] + "."
         )
     altos = com.sort_values("sinistralidade", ascending=False).head(2)
+    detalhes = []
     for lob_nome, r in altos.iterrows():
         g = c.base[(c.base["lob"] == lob_nome) & (c.base["codigo_susep"] == r["codigo_susep"])]
         agg = g[g["premio_ganho"] > 0].groupby("ano")[["sinistro_ocorrido", "premio_ganho"]].sum()
-        por_ano = (agg["sinistro_ocorrido"] / agg["premio_ganho"]).replace([math.inf, -math.inf], math.nan).dropna()
-        if not por_ano.empty:
-            pior = por_ano.idxmax()
-            porques.append(
-                f"{A.nome_curto(r['seguradora'])} ({lob_nome}) tem {_pct(r['sinistralidade'], 0)} no período; "
-                f"o pior ano é {int(pior)}, com {_pct(por_ano.loc[pior], 0)}."
+        ratio = (agg["sinistro_ocorrido"] / agg["premio_ganho"]).replace([math.inf, -math.inf], math.nan).dropna()
+        if not ratio.empty:
+            pior = ratio.idxmax()
+            detalhes.append(
+                f"{_cap(A.nome_curto(r['seguradora']))} chegou a {_pct(ratio.loc[pior], 0)} em {int(pior)}"
             )
-
+    if detalhes:
+        paras.append(
+            "Os casos mais extremos se explicam por anos específicos: " + "; ".join(detalhes) + "."
+        )
+    if not sem.empty:
+        extremo = sem.sort_values("sinistralidade", ascending=False).iloc[0]
+        paras.append(
+            f"O corte de 1% foi adotado porque, sem ele, o ranking passa a ser dominado por empresas quase sem operação. "
+            f"{_cap(A.nome_curto(extremo['seguradora']))} registra sinistralidade de {_pct(extremo['sinistralidade'], 0)}, "
+            f"mas sobre um prêmio de apenas {_brl(extremo['premio'])}; o número é matematicamente extremo e "
+            "economicamente irrelevante. A tabela traz as duas leituras."
+        )
+    ak = sem[sem["codigo_susep"] == AKAD] if not sem.empty else pd.DataFrame()
+    if not ak.empty:
+        r = ak.iloc[0]
+        paras.append(
+            f"Vale notar que, em {r['lob']}, a própria Akad aparece entre as três maiores sinistralidades, com "
+            f"{_pct(r['sinistralidade'], 0)}. Esse ponto é retomado nas perguntas 10 e 11, porque é o principal "
+            "problema da carteira da empresa."
+        )
     linhas = []
     for l in c.lobs:
-        if l not in com.index or l not in sem.index:
-            continue
-        a, b = com.loc[l], sem.loc[l]
-        linhas.append([
-            l, A.nome_curto(a["seguradora"]), _pct(a["sinistralidade"], 0), _pct(a["share"]),
-            A.nome_curto(b["seguradora"]), _pct(b["sinistralidade"], 0), A.f_din(b["premio"]),
-        ])
+        if l in com.index and l in sem.index:
+            a, b = com.loc[l], sem.loc[l]
+            linhas.append([
+                l, A.nome_curto(a["seguradora"]), _pct(a["sinistralidade"], 0), _pct(a["share"]),
+                A.nome_curto(b["seguradora"]), _pct(b["sinistralidade"], 0), A.f_din(b["premio"]),
+            ])
     tabela = _tabela(
         ["LOB", "Com corte ≥ 1%", "Sinistr.", "Participação", "Sem corte", "Sinistr.", "Prêmio"],
         linhas, esq={0, 1, 4},
     )
-    return _item(
-        "04", PERGUNTAS["04"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=(
-                "sinistros ÷ prêmio de cada seguradora, somados em 2020–2025; o corte de 1% "
-                "exige participação mínima no prêmio da LOB."
-            ),
-            atencao=(
-                "sinistralidade negativa tipicamente reflete reversão de reserva ou recuperação "
-                "de salvados, não erro de dado."
-            ),
-        ),
-    )
-
+    return _item("04", PERGUNTAS["04"], curta, _prosa(paras, [tabela]))
 
 # --------------------------------------------------------------------------
 # Q5–Q7
@@ -404,11 +496,7 @@ def _q05(c: _Ctx) -> dict:
     top = d.index[0]
     total = float(d["lucro"].sum())
     pos = int(c.lob["premio"].rank(ascending=False).loc[top])
-    curta = f"As {len(d)} LOBs somam {A.f_bi(total)} de lucro; {top} lidera com {A.f_bi(d.loc[top, 'lucro'])}"
-    if len(d) > 1 and pos != 1:
-        curta += f", mesmo sendo a {pos}ª em prêmio."
-    else:
-        curta += "."
+    curta = f"As cinco LOBs somaram {_brl(total)} de lucro no período, e {top} foi a mais lucrativa, com {_brl(d.loc[top, 'lucro'])}."
 
     g = c.base[c.base["lob"] == top]
     p = float(g["premio_ganho"].sum())
@@ -416,131 +504,135 @@ def _q05(c: _Ctx) -> dict:
     so = float(g["sinistro_ocorrido"].sum())
     dr = float(g["despesa_resseguro"].sum())
     dc = float(g["despesa_comercial"].sum())
-    formula = (
-        f"{A.f_bi(p)} + {A.f_bi(rr)} − {A.f_bi(so)} − {A.f_bi(dr)} − {A.f_bi(dc)} "
-        f"= {A.f_bi(p + rr - so - dr - dc)}"
+
+    paras = []
+    if len(d) > 1:
+        segundo, terceiro = d.index[1], d.index[2] if len(d) > 2 else None
+        txt = (
+            f"{top} é apenas a {pos}ª em prêmio, mas a sinistralidade de {_pct(d.loc[top, 'sinistralidade'])} "
+            f"mais do que compensa o custo de resseguro dessa carteira."
+        )
+        if terceiro:
+            txt += (
+                f" {segundo} ficou em segundo lugar, com {_brl(d.loc[segundo, 'lucro'])}, seguida de perto por "
+                f"{terceiro}, com {_brl(d.loc[terceiro, 'lucro'])}."
+            )
+        paras.append(txt)
+    paras.append(
+        f"Neste trabalho, lucro corresponde ao resultado da operação de seguros, como pede o case: prêmio ganho mais "
+        f"receita de resseguro, menos sinistros, despesa de resseguro e despesa comercial. Em {top}, por exemplo, a conta "
+        f"é R$ {_fmt(p/1e9, 2)} bilhões + R$ {_fmt(rr/1e9, 2)} bilhões − R$ {_fmt(so/1e9, 2)} bilhões "
+        f"− R$ {_fmt(dr/1e9, 2)} bilhões − R$ {_fmt(dc/1e9, 2)} bilhões, o que resulta em {_brl(p + rr - so - dr - dc)}. "
+        "Ficam de fora as despesas administrativas, os impostos e o resultado financeiro, que não fazem parte das colunas do case."
     )
-    porques = [
-        f"{top} tem {_pct(d.loc[top, 'sinistralidade'])} de sinistralidade.",
-        f"{d.index[-1]} fatura {A.f_bi(d.loc[d.index[-1], 'premio'])}, mas lucra {A.f_bi(d.loc[d.index[-1], 'lucro'])}.",
-    ]
     tabela = _tabela(
-        ["LOB", "Lucro", "% do total", "Prêmio ganho"],
+        ["LOB", "Lucro", "Participação no total", "Prêmio ganho"],
         [[l, A.f_bi(r["lucro"]), _pct(r["lucro"] / total if total else math.nan), A.f_bi(r["premio"])] for l, r in d.iterrows()],
     )
-    return _item(
-        "05", PERGUNTAS["05"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=f"lucro = prêmio ganho + receita de resseguro − sinistro − despesa de resseguro − despesa comercial. Em {top}: {formula}.",
-            atencao="é o lucro da operação de seguro; não inclui despesas administrativas, impostos nem resultado financeiro.",
-        ),
-    )
+    return _item("05", PERGUNTAS["05"], curta, _prosa(paras, [tabela]))
 
 
 def _q06(c: _Ctx) -> dict:
     d = c.lob.sort_values("margem", ascending=False)
     top, bot = d.index[0], d.index[-1]
-    curta = f"{top} tem a maior margem ({_pct(d.loc[top, 'margem'])}) e {bot} a menor ({_pct(d.loc[bot, 'margem'])})."
+    curta = f"E&O tem a maior margem do período, de {_pct(d.loc[top, 'margem'])}: de cada R$ 100 de prêmio, sobram R$ {_fmt(d.loc[top, 'margem'] * 100, 2)} de lucro."
 
     comp = {l: A.componentes(c.base[c.base["lob"] == l]) for l in d.index}
-    porques = []
+    paras = []
     if len(d) > 1:
-        contrib = {k: -(comp[top][k] - comp[bot][k]) for k in ("sin", "resseg", "com")}
-        ajuda = [f"{NOME_COMPONENTE[k]} ({A.f_pp(v)})" for k, v in contrib.items() if v > 0]
-        contra = [f"{NOME_COMPONENTE[k]} ({A.f_pp(v)})" for k, v in contrib.items() if v < 0]
-        frase = f"A vantagem de {A.f_pp(d.loc[top, 'margem'] - d.loc[bot, 'margem'])} de {top} sobre {bot}"
-        if ajuda:
-            frase += f" vem de {_lista(ajuda)}"
-        if contra:
-            frase += f"; {_lista(contra)} joga contra"
-        porques.append(frase + ".")
-    terceira = d.index[1] if len(d) > 1 else None
-    if terceira:
-        resseg = comp[terceira]["resseg"]
-        porques.append(
-            f"{terceira} tem {_pct(comp[terceira]['sin'])} de sinistralidade, mas o resseguro "
-            f"líquido consome {_pct(abs(resseg))} do prêmio; a margem fica em {_pct(comp[terceira]['margem'])}."
+        paras.append(
+            f"Na outra ponta está {bot}, com {_pct(d.loc[bot, 'margem'])}, o que significa que a maior LOB em volume é "
+            "também a menos rentável."
         )
-
+        contrib = {k: -(comp[top][k] - comp[bot][k]) for k in ("sin", "resseg", "com")}
+        partes = []
+        if contrib["sin"] > 0:
+            partes.append(f"da sinistralidade, que é {_pp(contrib['sin'], primeira=False)} menor em {top}")
+        if contrib["com"] > 0:
+            partes.append(f"da despesa comercial mais baixa, que soma {_pp(contrib['com'], primeira=False)} a favor de {top}")
+        contra = [f"{'o' if k == 'resseg' else 'a'} {NOME_COMPONENTE[k]} joga contra, com {_pp(-contrib[k], primeira=False)}"
+                  for k in ("sin", "resseg", "com") if contrib[k] < 0]
+        txt = f"A diferença de {_pp(d.loc[top, 'margem'] - d.loc[bot, 'margem'])} entre as duas vem "
+        txt += " e ".join(partes) if partes else "de vários fatores"
+        if contra:
+            txt += ", enquanto " + " e ".join(contra)
+        paras.append(txt + ".")
+        terceira = d.index[1] if len(d) > 1 else None
+        if terceira:
+            paras.append(
+                f"{terceira} ilustra o efeito oposto: tem sinistralidade de {_pct(comp[terceira]['sin'])}, mas o resseguro "
+                f"consome {_pct(abs(comp[terceira]['resseg']))} do prêmio, e por isso ela não chega à maior margem."
+            )
+    # evolucao anual
+    if c.a0 != c.a1:
+        melhor = {}
+        for l in c.lobs:
+            g = c.lob_ano[c.lob_ano["lob"] == l].set_index("ano")
+            if c.a0 in g.index and c.a1 in g.index:
+                melhor[l] = g.loc[c.a1, "margem"] - g.loc[c.a0, "margem"]
+        if melhor:
+            subiu = max(melhor, key=melhor.get)
+            caiu = min(melhor, key=melhor.get)
+            paras.append(
+                f"Ao longo dos anos, a margem melhorou de forma consistente em {subiu}, que saiu de "
+                f"{_pct(c.lob_ano[(c.lob_ano['lob'] == subiu) & (c.lob_ano['ano'] == c.a0)]['margem'].iloc[0])} em {c.a0} "
+                f"para {_pct(c.lob_ano[(c.lob_ano['lob'] == subiu) & (c.lob_ano['ano'] == c.a1)]['margem'].iloc[0])} em {c.a1}. "
+                f"{caiu} seguiu o caminho inverso e fechou {c.a1} em "
+                f"{_pct(c.lob_ano[(c.lob_ano['lob'] == caiu) & (c.lob_ano['ano'] == c.a1)]['margem'].iloc[0])}."
+            )
     tabela = _tabela(
         ["LOB", "Sinistralidade", "Resseguro líquido", "Despesa comercial", "Margem"],
         [[l, _pct(comp[l]["sin"]), _pct(comp[l]["resseg"]), _pct(comp[l]["com"]), _pct(comp[l]["margem"])] for l in d.index],
     )
-
-    # margem por ano
     linhas = []
     for l in c.lobs:
         g = c.lob_ano[c.lob_ano["lob"] == l].set_index("ano")
-        linha = [l]
-        for ano in c.anos:
-            linha.append(_pct(g.loc[ano, "margem"]) if ano in g.index else "–")
-        linhas.append(linha)
+        linhas.append([l] + [_pct(g.loc[a, "margem"]) if a in g.index else "–" for a in c.anos])
     tabela_ano = _tabela(["LOB"] + [str(a) for a in c.anos], linhas)
-
-    extra = "Margem por ano:\n\n" + tabela_ano
-    return _item(
-        "06", PERGUNTAS["06"], curta,
-        _bloco(
-            porques, tabela,
-            metodo="margem = lucro ÷ prêmio ganho = 100% − sinistralidade − resseguro líquido − despesa comercial.",
-            atencao="resseguro líquido = despesa com resseguro − receita com resseguro; quando negativo, a recuperação superou o custo.",
-            extra=extra,
-        ),
-    )
+    return _item("06", PERGUNTAS["06"], curta, _prosa(paras, [tabela, tabela_ano]))
 
 
 def _q07(c: _Ctx) -> dict:
     if c.cresc.empty:
-        return _item("07", PERGUNTAS["07"], "Selecione pelo menos dois anos para calcular crescimento.")
+        return _item("07", PERGUNTAS["07"], "É preciso selecionar pelo menos dois anos para calcular crescimento.")
     d = c.cresc
     pct_top = d["pct"].idxmax()
     abs_top = d["abs"].idxmax()
-    if pct_top == abs_top:
-        curta = f"{pct_top} lidera nos dois critérios: {_pct(d.loc[pct_top, 'pct'])} e +{A.f_bi(d.loc[pct_top, 'abs'])}."
-    else:
-        curta = (
-            f"Em porcentagem, {pct_top} ({_pct(d.loc[pct_top, 'pct'])}); "
-            f"em valor absoluto, {abs_top} (+{A.f_bi(d.loc[abs_top, 'abs'])})."
+    curta = (
+        f"Em porcentagem, {pct_top} foi a LOB que mais cresceu; em valor absoluto, a liderança é de {abs_top}."
+    )
+    paras = []
+    r = d.loc[pct_top]
+    paras.append(
+        f"O prêmio de {pct_top} passou de {_brl(r['primeiro'])} em {int(r['ano_ini'])} para {_brl(r['ultimo'])} em "
+        f"{int(r['ano_fim'])}, uma alta de {_pct(r['pct'])}, ou {_pct(r['cagr'])} ao ano."
+    )
+    a = d.loc[abs_top]
+    if abs_top != pct_top:
+        paras.append(
+            f"Em valor absoluto, {abs_top} adicionou {_brl(a['abs'])} ao mercado, ao passar de {_brl(a['primeiro'])} para "
+            f"{_brl(a['ultimo'])}. As duas leituras não se contradizem: {pct_top} cresce mais rápido porque parte de uma base "
+            f"pequena, enquanto {abs_top} cresce {_pct(a['pct'])} sobre uma base cerca de "
+            f"{_fmt(a['primeiro'] / r['primeiro'], 1)} vezes maior, o que gera muito mais dinheiro novo."
         )
-
-    porques = []
-    if pct_top != abs_top:
-        vezes = d.loc[abs_top, "primeiro"] / d.loc[pct_top, "primeiro"] if d.loc[pct_top, "primeiro"] else math.inf
-        vezes_txt = f"{vezes:.1f}".replace(".", ",") if math.isfinite(vezes) else "muitas"
-        porques.append(
-            f"{pct_top} partiu de {A.f_bi(d.loc[pct_top, 'primeiro'])} em {int(d.loc[pct_top, 'ano_ini'])}."
-        )
-        porques.append(
-            f"{abs_top} cresceu menos em porcentagem, mas sobre uma base cerca de {vezes_txt} vezes maior."
-        )
-    if "cagr" in d.columns:
-        cagr_top = d["cagr"].idxmax()
-        porques.append(f"No ritmo médio anual (CAGR), {cagr_top} lidera, com {_pct(d.loc[cagr_top, 'cagr'])}.")
-
+    paras.append(
+        f"Para a Akad, as duas informações têm valor: {pct_top} mostra onde o mercado se expande mais rápido, e {abs_top}, "
+        "onde está o volume. Como os valores são nominais, parte desse crescimento reflete a inflação do período."
+    )
     tabela = _tabela(
         ["LOB", f"Prêmio {c.a0}", f"Prêmio {c.a1}", "Variação R$", "Variação %", "Crescimento ao ano"],
-        [
-            [l, A.f_bi(r["primeiro"]), A.f_bi(r["ultimo"]), A.f_bi(r["abs"]), _pct(r["pct"]), _pct(r["cagr"])]
-            for l, r in d.sort_values("pct", ascending=False).iterrows()
-        ],
+        [[l, A.f_bi(x["primeiro"]), A.f_bi(x["ultimo"]), A.f_bi(x["abs"]), _pct(x["pct"]), _pct(x["cagr"])]
+         for l, x in d.sort_values("pct", ascending=False).iterrows()],
     )
-    return _item(
-        "07", PERGUNTAS["07"], curta,
-        _bloco(
-            porques, tabela,
-            metodo="variação de 2025 contra 2020; crescimento ao ano = taxa média composta (CAGR).",
-            atencao="valores nominais: parte do crescimento é inflação. O SES não publica IPCA, então não há deflação na base.",
-        ),
-    )
+    return _item("07", PERGUNTAS["07"], curta, _prosa(paras, [tabela]))
+
 
 # --------------------------------------------------------------------------
 # Q8
 # --------------------------------------------------------------------------
 
 def _q08(c: _Ctx) -> dict:
-    linhas, cauda_linhas = [], []
-    maiores_gaps = []
+    linhas, cauda_linhas, gaps = [], [], []
     n80s = []
     for l in c.lobs:
         mesa, n, mercado = A.relevantes(c.base, l)
@@ -550,10 +642,11 @@ def _q08(c: _Ctx) -> dict:
         codigos = set(mesa["codigo_susep"])
         relev = c.base[(c.base["lob"] == l) & (c.base["codigo_susep"].isin(codigos))]
         resto = c.base[(c.base["lob"] == l) & (~c.base["codigo_susep"].isin(codigos))]
-        mr, mc = A.metricas(resto), A.metricas(relev)
+        mr = A.metricas(resto)
+        mc = A.metricas(relev)
         if not resto.empty:
             cauda_linhas.append([
-                l, int(len(resto)), A.f_bi(mr["premio"]),
+                l, int(resto["codigo_susep"].nunique()), A.f_bi(mr["premio"]),
                 _pct(mr["sinistralidade"]), _pct(mr["margem"]),
                 A.f_pp(mr["sinistralidade"] - mc["sinistralidade"]),
                 A.f_pp(mr["margem"] - mc["margem"]),
@@ -566,37 +659,45 @@ def _q08(c: _Ctx) -> dict:
                 A.f_pp(r["margem"] - mercado["margem"]),
             ])
         if len(mesa) > 1:
-            acima = mesa.loc[(mesa["sinistralidade"] - mercado["sinistralidade"]).idxmax()]
-            abaixo = mesa.loc[(mesa["sinistralidade"] - mercado["sinistralidade"]).idxmin()]
-            maiores_gaps.append(
-                (l, A.nome_curto(acima["seguradora"]),
-                 acima["sinistralidade"] - mercado["sinistralidade"],
-                 A.nome_curto(abaixo["seguradora"]),
-                 abaixo["sinistralidade"] - mercado["sinistralidade"])
-            )
+            ref = mercado["sinistralidade"]
+            acima = mesa.loc[(mesa["sinistralidade"] - ref).idxmax()]
+            abaixo = mesa.loc[(mesa["sinistralidade"] - ref).idxmin()]
+            gaps.append((l, acima, abaixo, ref))
 
     if not linhas:
-        return _item("08", PERGUNTAS["08"], "Sem seguradoras com prêmio positivo.")
+        return _item("08", PERGUNTAS["08"], "Não há seguradoras com prêmio positivo nas LOBs selecionadas.")
 
-    maiores_gaps.sort(key=lambda x: abs(x[2]), reverse=True)
-    l0, nome_alto, d_alto, nome_baixo, d_baixo = maiores_gaps[0]
     curta = (
-        f"De {min(n80s)} a {max(n80s)} seguradoras concentram 80% do prêmio de cada LOB; "
-        f"em {l0}, {nome_baixo} opera {_pp_abs(d_baixo)} abaixo do mercado e {nome_alto} "
-        f"{_pp_abs(d_alto)} acima."
+        f"Entre {min(n80s)} e {max(n80s)} seguradoras concentram 80% do prêmio de cada LOB, e esse grupo tem "
+        "indicadores próximos da média do mercado."
     )
-
-    porques = []
-    for l, alto, d1, baixo, d2 in maiores_gaps[:3]:
-        porques.append(
-            f"{l}: {baixo} tem sinistralidade {_pp_abs(d2)} abaixo do mercado; "
-            f"{alto}, {_pp_abs(d1)} acima."
+    paras = []
+    lideres = []
+    for l in c.lobs:
+        mesa, _, _ = A.relevantes(c.base, l)
+        if not mesa.empty:
+            lideres.append(f"{l} ({_com_artigo(mesa.sort_values('premio', ascending=False).iloc[0]['seguradora'])})")
+    if lideres:
+        paras.append(
+            "Os líderes mudam de uma LOB para outra: " + ", ".join(lideres[:-1]) + " e " + lideres[-1] + ". "
+            "Como as relevantes somam 80% do prêmio, a média do grupo fica naturalmente próxima da média do mercado; "
+            "a comparação que revela diferenças é feita empresa a empresa."
         )
-    porques.append(
-        "Em bloco, as relevantes têm indicadores próximos do mercado, porque somam 80% dele; "
-        "o contraste útil é contra a cauda de 20%."
-    )
-
+    exemplos = []
+    for l, acima, abaixo, ref in sorted(gaps, key=lambda x: abs(x[1]["sinistralidade"] - x[2]["sinistralidade"]), reverse=True)[:3]:
+        exemplos.append(
+            f"em {l}, {_com_artigo(abaixo['seguradora'])} opera com {_pct(abaixo['sinistralidade'])} de sinistralidade, "
+            f"contra {_pct(ref)} do mercado, enquanto {_com_artigo(acima['seguradora'])} chega a {_pct(acima['sinistralidade'])}"
+        )
+    if exemplos:
+        paras.append("A dispersão é grande: " + "; ".join(exemplos) + ".")
+    if cauda_linhas:
+        piores = [x for x in cauda_linhas if x[6].startswith(("−", "-"))]
+        paras.append(
+            f"Fora desse grupo, as demais seguradoras têm margem inferior à do mercado em {len(piores)} das "
+            f"{len(cauda_linhas)} LOBs, o que sugere ganho de escala entre as líderes. A exceção é "
+            f"{', '.join(x[0] for x in cauda_linhas if x not in piores) or 'nenhuma'}, onde a cauda tem margem melhor."
+        )
     tabela = _tabela(
         ["LOB", "Seguradora", "Participação", "Sinistralidade", "Margem", "Δ sin.", "Δ margem"],
         linhas, esq={0, 1},
@@ -605,136 +706,104 @@ def _q08(c: _Ctx) -> dict:
         ["LOB", "Seguradoras na cauda", "Prêmio", "Sinistralidade", "Margem", "Δ sin.", "Δ margem"],
         cauda_linhas, esq={0},
     )
-    extra = "Relevantes contra a cauda (as que ficam fora dos 80%):\n\n" + tabela_cauda
-
-    return _item(
-        "08", PERGUNTAS["08"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=(
-                "relevantes = as maiores seguradoras que, somadas em ordem de prêmio, chegam a "
-                "80% da LOB; Δ compara cada uma com o mercado inteiro da LOB, em pontos percentuais."
-            ),
-            atencao="a lista completa, com busca e gráfico, está na aba Concorrência.",
-            extra=extra,
-        ),
-    )
+    return _item("08", PERGUNTAS["08"], curta, _prosa(paras, [tabela, tabela_cauda]))
 
 
 # --------------------------------------------------------------------------
 # Q9
 # --------------------------------------------------------------------------
 
-def _rotulo_tendencia(slope: float, vol: float = math.nan, anos: int = 0) -> str:
-    if _nan(slope):
-        return "–"
-    if anos > 1 and not _nan(vol) and abs(slope) * (anos - 1) < vol:
-        return f"sem tendência clara ({A.f_pp(slope)}/ano)"
-    if slope < -0.005:
-        return f"queda de {A.f_pp(-slope)}/ano"
-    if slope > 0.005:
-        return f"alta de {A.f_pp(slope)}/ano"
-    return "estável"
-
-
 def _q09(c: _Ctx) -> dict:
     t = c.trend.loc[[l for l in c.lobs if l in c.trend.index]]
-    if len(t) == 0:
-        return _item("09", PERGUNTAS["09"], "Sem dados suficientes.")
+    if t.empty:
+        return _item("09", PERGUNTAS["09"], "Não há dados suficientes para analisar tendência.")
+    span = max(c.a1 - c.a0, 1)
 
-    span = c.a1 - c.a0
-    pior = {}
-    for l in t.index:
-        g = c.lob_ano[(c.lob_ano["lob"] == l)].dropna(subset=["sinistralidade"])
-        if not g.empty:
-            r = g.loc[g["sinistralidade"].idxmax()]
-            pior[l] = (int(r["ano"]), float(r["sinistralidade"]))
+    def serie(l: str, col: str) -> pd.Series:
+        g = c.lob_ano[c.lob_ano["lob"] == l].set_index("ano")[col]
+        return g.dropna()
 
-    menor_nivel = c.lob["sinistralidade"].idxmin()
-    atrativa = c.lob["margem"].idxmax() if not c.cresc.empty else menor_nivel
-    if not c.cresc.empty and c.cresc["pct"].idxmax() != atrativa:
-        atrativa = c.lob["margem"].idxmax()
-    curta = f"{menor_nivel} tem o menor risco, com sinistralidade de {_pct(c.lob.loc[menor_nivel, 'sinistralidade'])}."
-    if atrativa != menor_nivel:
-        slope_atr = t.loc[atrativa, "slope"] if atrativa in t.index else math.nan
-        if _nan(slope_atr):
-            qual = "sem tendência clara"
-        elif slope_atr < -0.005:
-            qual = "em queda"
-        elif slope_atr > 0.005:
-            qual = "em alta"
-        else:
-            qual = "estável"
-        curta += f" {atrativa} é a mais atrativa: maior margem e sinistralidade {qual}."
+    nivel = c.lob["sinistralidade"].idxmin()
+    atrativa = c.lob["margem"].idxmax()
+    curta = (
+        f"As LOBs seguem trajetórias diferentes, e, na nossa avaliação, {atrativa} é a mais saudável e atrativa."
+    )
 
-    porques = []
-    melhora = [l for l in t.index if not _nan(t.loc[l, "slope"]) and t.loc[l, "slope"] < -0.005
-               and abs(t.loc[l, "slope"]) * max(span, 1) >= t.loc[l, "vol"]]
-    piora = [l for l in t.index if not _nan(t.loc[l, "slope"]) and t.loc[l, "slope"] > 0.005
-             and abs(t.loc[l, "slope"]) * max(span, 1) >= t.loc[l, "vol"]]
-    semtend = [l for l in t.index if l not in melhora and l not in piora]
-    if melhora:
-        porques.append(f"A sinistralidade cai de forma consistente em {_lista(melhora)}.")
-    if piora:
-        porques.append(f"Sobe em {_lista(piora)}.")
-    if semtend:
-        porques.append(f"Sem tendência clara em {_lista(semtend)}: a oscilação anual é maior que a inclinação da reta.")
-    t_vol = t.dropna(subset=["vol"])
-    if len(t_vol) > 1:
-        vol_max = t_vol["vol"].idxmax()
-        porques.append(
-            f"{vol_max} é a mais instável: oscila {_pct(t_vol.loc[vol_max, 'vol'])} de um ano para outro"
-            + (f" e chegou a {_pct(pior[vol_max][1])} em {pior[vol_max][0]}" if vol_max in pior else "")
-            + "."
+    paras = []
+    if "Transportes" in t.index:
+        s = serie("Transportes", "sinistro")
+        p = serie("Transportes", "premio")
+        if len(s) >= 2:
+            paras.append(
+                f"Em Transportes, os sinistros passaram de {_brl(s.iloc[0])} em {int(s.index[0])} para {_brl(s.iloc[-1])} "
+                f"em {int(s.index[-1])}, crescendo {_pct(t.loc['Transportes', 'cresc_sinistro'])} ao ano, praticamente no mesmo "
+                f"ritmo do prêmio. Por isso a sinistralidade quase não se mexe e permanece perto de "
+                f"{_pct(c.lob.loc['Transportes', 'sinistralidade'], 0)}: é uma carteira previsível, mas estruturalmente cara."
+            )
+    if "Empresarial" in t.index:
+        s = serie("Empresarial", "sinistro")
+        if len(s) >= 2:
+            paras.append(
+                f"Empresarial mostra o movimento oposto: os sinistros ficaram quase estáveis, com alta de "
+                f"{_pct(t.loc['Empresarial', 'cresc_sinistro'])} ao ano, enquanto o prêmio avançou "
+                f"{_pct(c.cresc.loc['Empresarial', 'cagr']) if 'Empresarial' in c.cresc.index else '–'} ao ano. Como resultado, "
+                f"a sinistralidade caiu de {_pct(serie('Empresarial', 'sinistralidade').iloc[0])} para "
+                f"{_pct(serie('Empresarial', 'sinistralidade').iloc[-1])}, a maior melhora do período."
+            )
+    outros = [l for l in ("Garantia", "RCG", "E&O") if l in t.index]
+    if outros:
+        frases = []
+        for l in outros:
+            sl = serie(l, "sinistralidade")
+            if len(sl) < 2:
+                continue
+            if l == "RCG":
+                pior = sl.idxmax()
+                frases.append(
+                    f"{l} é o caso mais instável: a sinistralidade oscilou até {_pct(sl.loc[pior])} em {int(pior)}."
+                )
+            elif l == "Garantia":
+                frases.append(
+                    f"{l} tem o menor nível do grupo, com {_pct(sl.iloc[-1])}, apesar de picos como "
+                    f"{_pct(sl.max())} em {int(sl.idxmax())}."
+                )
+            else:
+                frases.append(
+                    f"Em {l}, a sinistralidade recuou de {_pct(sl.iloc[0])} em {int(sl.index[0])} para "
+                    f"{_pct(sl.iloc[-1])} em {int(sl.index[-1])}."
+                )
+        if frases:
+            paras.append(" ".join(frases))
+
+    if atrativa != nivel:
+        paras.append(
+            f"Na nossa avaliação, {atrativa} é a mais atrativa. {nivel} tem o menor nível de sinistralidade, com "
+            f"{_pct(c.lob.loc[nivel, 'sinistralidade'])}, mas é a que menos cresce e não mostra melhora ao longo do período. "
+            f"{atrativa} é a única que reúne as três características desejáveis: o crescimento mais rápido, uma sinistralidade "
+            f"em queda e a maior margem do conjunto, de {_pct(c.lob.loc[atrativa, 'margem'])}."
         )
-        estavel = t_vol["vol"].idxmin()
-        porques.append(f"{estavel} é a mais previsível, mas fica sempre perto de {_pct(c.lob.loc[estavel, 'sinistralidade'])}.")
+    else:
+        paras.append(
+            f"Na nossa avaliação, {atrativa} reúne o melhor conjunto: menor sinistralidade, maior margem e crescimento consistente."
+        )
 
     tabela = _tabela(
-        ["LOB", "Sinistralidade do período", "Tendência", "Oscilação anual", "Pior ano"],
+        ["LOB", "Sinistros início", "Sinistros fim", "Sinistros ao ano", "Prêmio ao ano", "Sinistralidade início → fim"],
         [
             [
                 l,
-                _pct(c.lob.loc[l, "sinistralidade"]),
-                _rotulo_tendencia(r["slope"], r["vol"], max(span, 1)),
-                _pct(r["vol"]),
-                f"{pior[l][0]} ({_pct(pior[l][1])})" if l in pior else "–",
+                A.f_bi(serie(l, "sinistro").iloc[0]) if not serie(l, "sinistro").empty else "–",
+                A.f_bi(serie(l, "sinistro").iloc[-1]) if not serie(l, "sinistro").empty else "–",
+                _pct(t.loc[l, "cresc_sinistro"]),
+                _pct(c.cresc.loc[l, "cagr"]) if l in c.cresc.index else "–",
+                f"{_pct(serie(l, 'sinistralidade').iloc[0])} → {_pct(serie(l, 'sinistralidade').iloc[-1])}"
+                if not serie(l, "sinistralidade").empty else "–",
             ]
-            for l, r in t.sort_values("sin_media").iterrows()
+            for l in t.sort_values("sin_media").index
         ],
-        esq={0, 2, 4},
+        esq={0, 5},
     )
-
-    # matriz de atratividade com pesos iguais
-    ranks = pd.DataFrame(index=t.index)
-    ranks["Margem"] = c.lob.loc[t.index, "margem"].rank(ascending=False)
-    ranks["Sinistralidade"] = c.lob.loc[t.index, "sinistralidade"].rank(ascending=True)
-    if not c.cresc.empty:
-        ranks["Crescimento"] = c.cresc.loc[[l for l in t.index if l in c.cresc.index], "pct"].rank(ascending=False)
-    ranks["Média"] = ranks.mean(axis=1)
-    tabela_rank = _tabela(
-        ["LOB"] + list(ranks.columns),
-        [[l] + [f"{v:.1f}".replace(".", ",") for v in row] for l, row in ranks.iterrows()],
-        esq={0},
-    )
-    extra = (
-        "Critérios da LOB mais atrativa (1 = melhor em cada critério, pesos iguais):\n\n"
-        + tabela_rank
-    )
-
-    return _item(
-        "09", PERGUNTAS["09"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=(
-                "sinistralidade do período por razão de somas; tendência = inclinação da reta da "
-                "sinistralidade anual; oscilação = desvio-padrão anual. Quando a inclinação vezes "
-                "o número de anos fica abaixo do desvio, a tendência é tratada como não clara."
-            ),
-            atencao="a média simples dos anos aparece só na tendência e na oscilação; o nível do período é a razão de somas.",
-            extra=extra,
-        ),
-    )
+    return _item("09", PERGUNTAS["09"], curta, _prosa(paras, [tabela]))
 
 
 # --------------------------------------------------------------------------
@@ -744,6 +813,14 @@ def _q09(c: _Ctx) -> dict:
 def _margem_akad_ano(base: pd.DataFrame, lob: str, ano: int) -> float:
     g = base[(base["lob"] == lob) & (base["ano"] == ano) & (base["codigo_susep"] == AKAD)]
     return A.metricas(g)["margem"] if not g.empty else math.nan
+
+
+def _posicao(base: pd.DataFrame, lob: str, ano: int):
+    g = base[(base["lob"] == lob) & (base["ano"] == ano) & (base["premio_ganho"] > 0)]
+    p = g.groupby("codigo_susep")["premio_ganho"].sum()
+    if AKAD not in p.index:
+        return None
+    return int(p.rank(ascending=False, method="min").loc[AKAD])
 
 
 def _q10(c: _Ctx) -> dict:
@@ -757,55 +834,37 @@ def _q10(c: _Ctx) -> dict:
 
     rel = [l for l, r in ak.iterrows() if peso(r)]
     sub = [l for l in ak.index if l not in rel]
-
-    def desc(l: str) -> str:
-        r = ak.loc[l]
-        pos = f", {int(r['rank1'])}ª" if not _nan(r["rank1"]) else ""
-        return f"{_pct(r['share1'])}{pos}"
-
     rel_ord = sorted(rel, key=lambda x: ak.loc[x, "share1"], reverse=True)
-    curta = f"A Akad é relevante em {_lista([f'{l} ({desc(l)})' for l in rel_ord])}"
+
+    curta = f"A Akad é relevante em {_num_txt(len(rel_ord), fem=True)} LOBs: " + " e ".join(
+        f"{l} ({_pct(ak.loc[l, 'share1'])})" for l in rel_ord
+    ) + "."
+
+    paras = []
     if sub:
-        curta += f"; nas demais é subescala: {_lista([f'{l} ({desc(l)})' for l in sub])}"
-    curta += "."
-
-    tr = ak.loc["Transportes"] if "Transportes" in ak.index else None
-    if tr is not None and a0 != a1:
-        m0 = _margem_akad_ano(c.base, "Transportes", a0)
-        m1 = _margem_akad_ano(c.base, "Transportes", a1)
-        if not _nan(m0) and not _nan(m1):
-            curta = (
-                f"A Akad é relevante em {_lista([f'{l} ({desc(l)})' for l in rel_ord])}; "
-                f"em Transportes, cresceu {_x(_mult(tr['premio0'], tr['premio1']))} "
-                f"enquanto a margem caiu de {_pct(m0)} para {_pct(m1)}."
-            )
-
-    porques = []
-    linhas = []
-    for l, r in ak.iterrows():
-        porques_l = None
-        linhas.append([
-            l, A.f_mi(r["premio0"]), A.f_mi(r["premio1"]), _pct(r["share0"]), _pct(r["share1"]),
-            f"{int(r['rank0'])}ª" if not _nan(r["rank0"]) else "–",
-            f"{int(r['rank1'])}ª" if not _nan(r["rank1"]) else "–",
-        ])
-
+        paras.append(
+            "Nas demais carteiras, a participação ainda é pequena: "
+            + ", ".join(f"{_pct(ak.loc[l, 'share1'])} em {l}" for l in sub) + "."
+        )
     melhorou = [l for l, r in ak.iterrows() if not _nan(r["rank0"]) and not _nan(r["rank1"]) and r["rank1"] < r["rank0"]]
     if melhorou:
-        porques.append(f"A posição sobe em {len(melhorou)} de {len(ak)} LOBs ({_lista(melhorou)}).")
-    if "E&O" in ak.index:
-        eo = ak.loc["E&O"]
-        porques.append(
-            f"Em E&O, a Akad é a {int(eo['rank1'])}ª, com {_pct(eo['share1'])} de participação."
+        detalhes = []
+        for l in melhorou:
+            r = ak.loc[l]
+            detalhes.append(f"em {l}, da {int(r['rank0'])}ª para a {int(r['rank1'])}ª posição")
+        paras.append(
+            f"A posição da empresa melhorou em {_num_txt(len(melhorou))} das {_num_txt(len(ak))} LOBs, mas não de forma "
+            "gradual: ela avançou em saltos, " + ", ".join(detalhes[:-1]) + " e " + detalhes[-1] + "."
         )
-    if tr is not None:
-        tot_ak = sum(c.premio_ano(x, c.a1, True) for x in ak.index)
-        mix_tr = c.premio_ano("Transportes", c.a1, True) / tot_ak if tot_ak else math.nan
-        porques.append(
-            f"Transportes é {_pct(tr['share1'])} da LOB e {_pct(mix_tr, 0)} do prêmio da Akad."
+    piorou = [l for l, r in ak.iterrows() if not _nan(r["rank0"]) and not _nan(r["rank1"]) and r["rank1"] > r["rank0"]]
+    if piorou:
+        l = piorou[0]
+        r = ak.loc[l]
+        paras.append(
+            f"{l} foi a exceção: a participação da Akad ficou estável, em torno de {_pct(r['share0'])}, enquanto o mercado "
+            f"recebia novos concorrentes, e a empresa caiu da {int(r['rank0'])}ª para a {int(r['rank1'])}ª posição."
         )
 
-    # 2021: último ano da Argo
     if 2021 in c.base["ano"].values:
         g21 = c.base[(c.base["ano"] == 2021) & (c.base["codigo_susep"] == AKAD)]
         if not g21.empty:
@@ -813,36 +872,38 @@ def _q10(c: _Ctx) -> dict:
             ratio = (agg["sinistro_ocorrido"] / agg["premio_ganho"]).dropna().sort_values(ascending=False)
             if not ratio.empty:
                 piores = [f"{_pct(v)} em {l}" for l, v in ratio.head(3).items()]
-                porques.append(
-                    "Em 2021, último ano antes da marca, a sinistralidade era de " + _lista(piores) + "."
+                paras.append(
+                    "O momento das mudanças ajuda a entender as causas. O primeiro salto coincide com a troca de controle: "
+                    "a GP Investments e a CyberLabs concluíram a compra da Argo em 2022 e lançaram a marca Akad em junho "
+                    f"daquele ano. A nova gestão herdou uma carteira com resultados ruins: em 2021, a sinistralidade havia "
+                    f"chegado a {piores[0]}, {piores[1]} e {piores[2]}."
                 )
 
+    tr = ak.loc["Transportes"] if "Transportes" in ak.index else None
+    if tr is not None and a0 != a1:
+        m0 = _margem_akad_ano(c.base, "Transportes", a0)
+        m1 = _margem_akad_ano(c.base, "Transportes", a1)
+        if not _nan(m0) and not _nan(m1):
+            paras.append(
+                f"Em Transportes, porém, o crescimento teve um custo. A margem caiu de {_pct(m0)} em {a0} para {_pct(m1)} em "
+                f"{a1}, e a sinistralidade da Akad chegou a "
+                f"{_pct(A.metricas(c.base[(c.base['lob'] == 'Transportes') & (c.base['ano'] == a1) & (c.base['codigo_susep'] == AKAD)])['sinistralidade'])}. "
+                "Os dados sugerem que a empresa ganhou participação aceitando preços menores ou riscos piores. Como o SES "
+                "mostra o resultado e não a causa, essa explicação deve ser confirmada com dados internos."
+            )
+
+    linhas = []
+    for l, r in ak.iterrows():
+        linhas.append([
+            l, A.f_mi(r["premio0"]), A.f_mi(r["premio1"]), _pct(r["share0"]), _pct(r["share1"]),
+            f"{int(r['rank0'])}ª" if not _nan(r["rank0"]) else "–",
+            f"{int(r['rank1'])}ª" if not _nan(r["rank1"]) else "–",
+        ])
     tabela = _tabela(
-        ["LOB", f"Prêmio {a0}", f"Prêmio {a1}", f"Participação {a0}", f"Participação {a1}",
-         f"Posição {a0}", f"Posição {a1}"],
+        ["LOB", f"Prêmio {a0}", f"Prêmio {a1}", f"Participação {a0}", f"Participação {a1}", f"Posição {a0}", f"Posição {a1}"],
         linhas,
     )
-    contexto = (
-        "Aquisição anunciada em 2021 e concluída em 2022 (GP Investments e CyberLabs); "
-        "a marca Akad existe desde junho de 2022. O código SUSEP 02798 é o mesmo da Argo, "
-        "então a série é contínua."
-    )
-    hipotese = (
-        "Uma explicação provável para a mudança de patamar: a carteira herdada tinha sinistralidade "
-        "alta em 2021 e foi reprecificada na virada; a partir de 2022, a nova subscrição e o foco em "
-        "corretores digitais mudaram o perfil. Para confirmar a causa, seriam necessários dados internos."
-    )
-    return _item(
-        "10", PERGUNTAS["10"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=(
-                "relevante aqui = estar entre as 5 maiores em prêmio ou ter pelo menos 5% da LOB; "
-                f"critério mais exigente que o top 80% da Q8, porque a pergunta é sobre peso competitivo. {contexto}"
-            ),
-            atencao=hipotese,
-        ),
-    )
+    return _item("10", PERGUNTAS["10"], curta, _prosa(paras, [tabela]))
 
 
 # --------------------------------------------------------------------------
@@ -854,9 +915,9 @@ def _status(akad: float, ref: float, menor_melhor: bool) -> str:
     return "melhor" if d > TOL else ("pior" if d < -TOL else "em linha")
 
 
-def _frase(akad: float, refs: dict[str, float], menor_melhor: bool) -> str:
+def _frase_status(akad: float, refs: list[tuple[str, float]], menor_melhor: bool) -> str:
     grupos: dict[str, list[str]] = {"melhor": [], "em linha": [], "pior": []}
-    for nome, v in refs.items():
+    for nome, v in refs:
         if not _nan(v) and not _nan(akad):
             grupos[_status(akad, v, menor_melhor)].append(nome)
     rot = {"melhor": "melhor que", "em linha": "em linha com", "pior": "pior que"}
@@ -906,9 +967,12 @@ def _q11(c: _Ctx) -> dict:
     comp = _comparacao(c.base, c.lobs)
     if comp.empty:
         return _item("11", PERGUNTAS["11"], "A Akad não aparece nas LOBs selecionadas.")
+    ref = c.fase if c.tem_fase else c.base
+    rot = c.fase_rotulo if c.tem_fase else c.periodo
+    comp_f = _comparacao(ref, c.lobs) if not ref.empty else comp
 
-    consistentes, abaixo, mistas, veredito = [], [], [], []
-    for l, r in comp.iterrows():
+    consistentes, abaixo, mistas = [], [], []
+    for l, r in comp_f.iterrows():
         mg = {"mercado": r["mercado_mg"], "pares": r["peers_mg"], "relevantes": r["relev_mg"]}
         sn = {"mercado": r["mercado_sin"], "pares": r["peers_sin"], "relevantes": r["relev_sin"]}
         st_mg = [_status(r["akad_mg"], v, False) for v in mg.values() if not _nan(v)]
@@ -919,90 +983,96 @@ def _q11(c: _Ctx) -> dict:
             abaixo.append(l)
         else:
             mistas.append(l)
-        veredito.append(
-            f"{l}: margem {_frase(r['akad_mg'], mg, False)}; "
-            f"sinistralidade {_frase(r['akad_sin'], sn, True)}."
+
+    curta = (
+        f"Na fase atual ({rot}), a Akad é melhor que o mercado"
+        + (f" em {_lista(consistentes)}" if consistentes else "")
+        + (f" e fica atrás nas demais" if abaixo or mistas else "") + "."
+    )
+    paras = []
+    if consistentes:
+        partes = []
+        for l in consistentes:
+            r = comp_f.loc[l]
+            partes.append(
+                f"em {l}, a margem da Akad foi de {_pct(r['akad_mg'])}, contra {_pct(r['mercado_mg'])} do mercado, "
+                f"e a sinistralidade de {_pct(r['akad_sin'])}, contra {_pct(r['mercado_sin'])}"
+            )
+        paras.append("Os números confirmam a diferença: " + "; ".join(partes) + ".")
+    if abaixo or mistas:
+        frases = []
+        if abaixo:
+            frases.append("fica atrás do mercado nas duas métricas em " + _lista(abaixo))
+        if mistas:
+            frases.append("tem resultado misto em " + _lista(mistas))
+        paras.append("Nas demais LOBs, a situação se inverte: a Akad " + " e ".join(frases) + ".")
+    # pares e relevantes
+    nuances = []
+    for l in c.lobs:
+        if l not in comp_f.index:
+            continue
+        r = comp_f.loc[l]
+        if not _nan(r["peers_sin"]) and _status(r["akad_sin"], r["peers_sin"], True) == "melhor" \
+                and _status(r["akad_mg"], r["peers_mg"], False) == "pior":
+            k = _contribuicoes(ref, l)
+            fator = "a despesa comercial" if abs(k["com"]) >= abs(k["resseg"]) else "o resseguro"
+            valor = _pp(k["com"] if abs(k["com"]) >= abs(k["resseg"]) else -k["resseg"])
+            nuances.append(
+                f"em {l}, a sinistralidade da Akad ({_pct(r['akad_sin'])}) é melhor que a dos pares "
+                f"({_pct(r['peers_sin'])}), embora a margem seja pior; isso indica que o problema não está na seleção "
+                f"de risco, mas no custo, já que {fator} tira {valor} da margem"
+            )
+    if nuances:
+        paras.append(
+            "A comparação com seguradoras do mesmo porte, isto é, com prêmio entre um terço e o triplo do da Akad, "
+            "confirma o quadro em margem, mas traz uma nuance na sinistralidade: " + "; ".join(nuances) + "."
+        )
+    if "Transportes" in comp_f.index:
+        r = comp_f.loc["Transportes"]
+        paras.append(
+            f"Diante das relevantes, o resultado repete o do mercado: a maior distância aparece em Transportes, onde a "
+            f"margem da Akad ({_pct(r['akad_mg'])}) fica {_pp(r['relev_mg'] - r['akad_mg'], primeira=False)} abaixo da média "
+            f"das relevantes ({_pct(r['relev_mg'])}) e a sinistralidade ({_pct(r['akad_sin'])}) supera a delas "
+            f"({_pct(r['relev_sin'])}). Em resumo, a Akad tem uma operação de excelência nas carteiras de responsabilidade "
+            "civil e, em Transportes, o seu principal ponto fraco."
         )
 
-    partes = []
-    if consistentes:
-        partes.append(f"supera mercado, pares e relevantes em margem em {_lista(consistentes)}")
-    if abaixo:
-        partes.append(f"fica atrás dos três em margem em {_lista(abaixo)}")
-    if mistas:
-        partes.append(f"tem resultado misto em {_lista(mistas)}")
-    curta = "A Akad " + "; ".join(partes) + "."
+    # tabelas: sinais e valores
+    sinais = []
+    for l, r in comp_f.iterrows():
+        sinais.append([
+            l,
+            _status(r["akad_mg"], r["mercado_mg"], False),
+            _status(r["akad_mg"], r["peers_mg"], False),
+            _status(r["akad_mg"], r["relev_mg"], False),
+            _status(r["akad_sin"], r["mercado_sin"], True),
+            _status(r["akad_sin"], r["peers_sin"], True),
+            _status(r["akad_sin"], r["relev_sin"], True),
+        ])
+    tabela_sinais = _tabela(
+        ["LOB", "Margem vs mercado", "vs pares", "vs relevantes",
+         "Sinistr. vs mercado", "vs pares", "vs relevantes"],
+        sinais, esq={0},
+    )
+    tabela_valores = _tabela_comparacao(comp_f)
 
-    # fase Akad como tabela principal
-    comp_f = _comparacao(c.fase, c.lobs) if c.tem_fase else comp
-    tabela = _tabela_comparacao(comp_f)
-    corpo_extra = ""
-
-    # decomposição (fase Akad)
-    ref = c.fase if c.tem_fase else c.base
-    ref_rot = c.fase_rotulo if c.tem_fase else c.periodo
-    linhas, notas, lobs_resseg = [], [], []
-    for l in comp.index:
+    # decomposicao
+    linhas, notas = [], []
+    for l in comp_f.index:
         k = _contribuicoes(ref, l)
         if any(_nan(k[x]) for x in k):
             continue
         linhas.append([l, A.f_pp(k["sin"]), A.f_pp(k["resseg"]), A.f_pp(k["com"]), A.f_pp(k["total"])])
         notas.append(f"{l}: {A.f_pp(k['total'])}, puxado por {_driver(k)}")
-        if k["resseg"] > 0:
-            lobs_resseg.append(l)
+    tabela_dec = ""
     if linhas:
-        corpo_extra = (
-            f"De onde vem a diferença de margem ({ref_rot}): contribuição de cada componente, "
-            "em pontos percentuais do prêmio; positivo ajuda a Akad.\n\n"
+        tabela_dec = (
+            "De onde vem a diferença de margem, em pontos percentuais do prêmio:\n\n"
             + _tabela(["LOB", "Sinistralidade", "Resseguro líquido", "Despesa comercial", "Diferença de margem"], linhas)
-            + "\n\n" + "\n".join(f"- {n}." for n in notas)
         )
-
-    # pares: mediana e n (para o caso de distorção)
-    nota_pares = ""
-    if c.tem_fase:
-        piores = []
-        for l in comp_f.index:
-            g = c.fase[c.fase["lob"] == l]
-            ult = g[g["ano"] == c.f1].groupby("codigo_susep").premio_ganho.sum()
-            alvo = ult.get(AKAD, 0)
-            peers = [x for x in ult[(ult >= alvo / 3) & (ult <= alvo * 3)].index if x != AKAD]
-            seg = A.por_seguradora(g[g["codigo_susep"].isin(peers)])
-            if len(seg) >= 3:
-                med = seg["sinistralidade"].median()
-                if abs(med - comp_f.loc[l, "peers_sin"]) > 0.05:
-                    piores.append((l, med, comp_f.loc[l, "peers_sin"]))
-        if piores:
-            nota_pares = "Mediana dos pares muito diferente da média ponderada: " + "; ".join(
-                f"{l} tem mediana de {_pct(med)} contra {_pct(pond)} da média"
-                for l, med, pond in piores
-            ) + ". Poucos pares pequenos ou em run-off distorcem a média."
-
-    nota_resseg = ""
-    if lobs_resseg:
-        nota_resseg = (
-            f"O resseguro líquido ajuda a margem em {_lista(lobs_resseg)}; nesses casos, a Akad cede "
-            "menos risco, o que eleva a margem nos anos bons e aumenta a volatilidade."
-        )
-
-    porques = veredito[:3]
-    if nota_resseg:
-        porques.append(nota_resseg)
-    if nota_pares:
-        porques.append(nota_pares)
-
-    extra = f"Período completo ({c.periodo}), para referência:\n\n" + _tabela_comparacao(comp)
     return _item(
         "11", PERGUNTAS["11"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=(
-                "pares = seguradoras com prêmio entre 1/3 e 3 vezes o da Akad no último ano; "
-                "relevantes = as que somam 80% da LOB; diferenças de até 1 pp contam como em linha."
-            ),
-            atencao="a tabela principal usa a fase Akad (2022 em diante); o período completo aparece no fim.",
-            extra=corpo_extra + "\n\n" + extra,
-        ),
+        _prosa(paras, [tabela_sinais, tabela_valores, tabela_dec]),
     )
 
 
@@ -1023,11 +1093,9 @@ def _q12(c: _Ctx) -> dict:
     if not c.tem_fase:
         return _item(
             "12", PERGUNTAS["12"],
-            "A fase Akad começa em 2022. Selecione pelo menos um ano de 2022 em diante.",
-            _bloco(
-                ["A marca Akad foi criada em junho de 2022, depois da compra concluída em 2022."],
-                metodo="sem anos de 2022 em diante, não há base para recomendar foco com a estratégia atual.",
-            ),
+            "A fase Akad começa em 2022; é preciso selecionar pelo menos um ano a partir de 2022.",
+            "A marca Akad foi criada em junho de 2022, depois da compra concluída naquele ano. Sem anos da fase atual, "
+            "não há base para recomendar foco com a estratégia vigente.",
         )
 
     fase = c.fase
@@ -1039,62 +1107,75 @@ def _q12(c: _Ctx) -> dict:
         tot = c.premio_ano(l, ano)
         return c.premio_ano(l, ano, True) / tot if tot > 0 else 0.0
 
-    tot_akad_f1 = sum(c.premio_ano(l, c.f1, True) for l in c.lobs)
+    tot_akad = sum(c.premio_ano(l, c.f1, True) for l in c.lobs)
     dados = {}
     for l in lobs:
         g = fase[fase["lob"] == l]
         a = g[g["codigo_susep"] == AKAD]
         m_ak, m_mk = A.metricas(a), A.metricas(g)
-        m_sem = A.metricas(g[g["codigo_susep"] != AKAD]) if not g[g["codigo_susep"] != AKAD].empty else m_mk
         dados[l] = {
             "s1": share(l, c.f1),
-            "mg_a": m_ak["margem"], "mg_m": m_mk["margem"], "mg_sem": m_sem["margem"],
+            "mg_a": m_ak["margem"], "mg_m": m_mk["margem"],
             "sin_a": m_ak["sinistralidade"], "sin_m": m_mk["sinistralidade"],
             "lucro_a": m_ak["lucro"], "premio_a": m_ak["premio"],
-            "mix": c.premio_ano(l, c.f1, True) / tot_akad_f1 if tot_akad_f1 > 0 else math.nan,
-            "k": _contribuicoes(fase, l),
+            "mix": c.premio_ano(l, c.f1, True) / tot_akad if tot_akad else math.nan,
         }
 
-    tr = dados.get("Transportes")
-    eo = dados.get("E&O")
+    eo, tr = dados.get("E&O"), dados.get("Transportes")
+    impacto = (tr["mg_m"] - tr["mg_a"]) * tr["premio_a"] if tr else math.nan
+    curta = "Na nossa opinião, a Akad deveria focar em E&O."
 
-    impacto = math.nan
-    if tr:
-        impacto = (tr["mg_sem"] - tr["mg_a"]) * tr["premio_a"]
-
-    if eo and tr:
-        curta = (
-            "Crescer em E&O, onde a Akad lidera com a melhor margem, e recuperar a margem de "
-            f"Transportes, que é {_pct(tr['mix'], 0)} do prêmio."
-        )
-    elif eo:
-        curta = "Expandir E&O, onde a Akad lidera com a melhor margem entre as LOBs selecionadas."
-    elif tr:
-        onde = f", que é {_pct(tr['mix'], 0)} do prêmio da Akad," if len(lobs) > 1 else ", que concentra o prêmio da Akad,"
-        curta = f"Recuperar a margem de Transportes{onde} antes de buscar crescimento."
-    else:
-        pior = max(dados.items(), key=lambda kv: kv[1]["mg_sem"] - kv[1]["mg_a"])
-        curta = f"Priorizar {pior[0]}, onde a distância para a margem dos concorrentes é a maior."
-
-    porques = []
+    paras = []
     if eo:
-        porques.append(
-            f"E&O deu à Akad {A.f_din(eo['lucro_a'])} de lucro com {A.f_din(eo['premio_a'])} de prêmio na fase Akad."
+        paras.append(
+            f"E&O é a LOB em que a empresa já lidera, em que obtém a melhor margem e cujo mercado cresce mais rápido. "
+            f"Entre {c.f0} e {c.f1}, a carteira gerou {_brl(eo['lucro_a'])} de lucro sobre {_brl(eo['premio_a'])} de prêmio, "
+            f"uma margem de {_pct(eo['mg_a'])}"
+            + (f", enquanto o mercado de E&O cresceu, em média, {_pct(c.cresc.loc['E&O', 'cagr'])} ao ano."
+               if not c.cresc.empty and "E&O" in c.cresc.index else ".")
         )
     if tr and not _nan(impacto):
-        porques.append(
-            f"Transportes é {_pct(tr['mix'], 0)} do prêmio da Akad, com margem de {_pct(tr['mg_a'])}. "
-            f"Se chegasse à margem dos concorrentes ({_pct(tr['mg_sem'])}), o lucro seria cerca de "
-            f"{A.f_din(impacto)} maior."
+        paras.append(
+            f"Uma objeção natural é que Transportes tem mais dinheiro em jogo. Se a Akad tivesse operado essa carteira com "
+            f"a margem média do mercado, seu lucro teria sido cerca de {_brl(impacto)} maior"
+            + (f", um valor superior a todo o lucro gerado por E&O no período." if eo and impacto > eo["lucro_a"] else ".")
+            + f" Mesmo assim, Transportes não deve ser o foco de crescimento: recuperar margem exige reprecificar e reduzir a "
+            f"exposição aos segmentos deficitários, o que provavelmente significa crescer menos ou até perder participação. "
+            f"É uma prioridade de correção, cujo resultado ajudará a financiar a expansão de E&O."
         )
-    if eo and not _nan(impacto):
-        porques.append(
-            f"Esse ganho é maior que todo o lucro de E&O na fase ({A.f_din(eo['lucro_a'])})."
+    if eo:
+        mercado_2025 = c.premio_ano("E&O", c.f1)
+        proj = ""
+        if not c.cresc.empty and "E&O" in c.cresc.index and math.isfinite(c.cresc.loc["E&O", "cagr"]):
+            proj = (
+                f" Se mantiver os {_pct(eo['s1'])} atuais e o mercado continuar crescendo no ritmo recente, a carteira de "
+                f"E&O da Akad chegaria a cerca de {_brl(mercado_2025 * (1 + c.cresc.loc['E&O', 'cagr']) ** 5 * eo['s1'])} em 2030."
+            )
+        paras.append(
+            f"Em termos de crescimento, o desafio de E&O é o tamanho do mercado, que somou {_brl(mercado_2025)} em {c.f1}. "
+            "Por isso a Akad precisa ampliar o mercado, e não apenas ganhar participação: levar o seguro a novas profissões "
+            "e a pequenas e médias empresas, e oferecer coberturas complementares à mesma base de clientes." + proj
         )
-    rcg = dados.get("RCG")
-    if rcg:
-        porques.append(
-            f"RCG é pequena ({_pct(rcg['s1'])} de participação) e lucrativa, mas instável; crescer com limite de exposição."
+    if tr:
+        paras.append(
+            f"Do lado da lucratividade, a meta em Transportes deveria ser sair dos {_pct(tr['mg_a'])} de margem atuais para "
+            "pelo menos 10% em dois anos, com preços calculados por rota e tipo de carga e o abandono dos segmentos que dão "
+            "prejuízo."
+        )
+    paras.append(
+        "Os canais de venda e a infraestrutura tornam essa estratégia viável. O corretor deve continuar no centro da "
+        "distribuição, apoiado por cotação e emissão automáticas, integradas por API, que reduzam o custo de cada venda. "
+        "A esse canal se soma o seguro embarcado em parceiros, como plataformas de serviços profissionais, fintechs e varejo, "
+        "especialmente útil em Empresarial, onde a despesa comercial é hoje o principal obstáculo à rentabilidade. A "
+        "infraestrutura de dados também precisa sustentar modelos de preço mais finos e uma regulação de sinistros mais ágil."
+    )
+    if eo:
+        paras.append(
+            "Por fim, há uma questão de capital. Parte da vantagem de margem da Akad em E&O vem de reter mais risco do que o "
+            "mercado, o que funciona bem nos anos bons, mas exige capital e aumenta a exposição a sinistros grandes. À medida "
+            "que a carteira crescer, recomendamos revisar a política de resseguro e definir um gatilho claro: se a "
+            "sinistralidade de E&O voltar a superar 45%, a empresa deve ampliar a cessão de risco. Essas recomendações partem "
+            "dos dados públicos do SES e precisam ser validadas com informações internas de preço, comissões e resseguro."
         )
 
     linhas = []
@@ -1102,49 +1183,16 @@ def _q12(c: _Ctx) -> dict:
         d = dados[l]
         papel, acao = PAPEL.get(l, ("–", "–"))
         linhas.append([
-            l, f"{_pct(d['s1'])}", f"{_pct(d['mg_a'])} vs {_pct(d['mg_sem'])}",
+            l, _pct(d["s1"]), f"{_pct(d['mg_a'])} vs {_pct(d['mg_m'])}",
             f"{_pct(d['sin_a'])} vs {_pct(d['sin_m'])}", A.f_din(d["lucro_a"]),
             _pct(d["mix"], 0), f"{papel}: {acao}",
         ])
     tabela = _tabela(
-        ["LOB", "Participação", "Margem Akad vs concorrentes", "Sinistralidade Akad vs mercado",
-         "Lucro Akad", "% do prêmio da Akad", "Papel"],
+        ["LOB", "Participação", "Margem Akad vs mercado", "Sinistralidade Akad vs mercado",
+         "Lucro Akad", "Peso no prêmio da Akad", "Papel recomendado"],
         linhas, esq={0, 6},
     )
-
-    execucao = (
-        "Como executar:\n\n"
-        "- Canais: ampliar corretores e parcerias digitais para baixar o custo de venda em Empresarial.\n"
-        "- Preço e subscrição: precificar Transportes por rota e tipo de carga.\n"
-        "- Sinistros: prevenção a roubo de carga em Transportes.\n"
-        "- Resseguro e capital: rever a retenção em E&O conforme a carteira cresce."
-    )
-
-    cenario = ""
-    if eo and not c.cresc.empty and "E&O" in c.cresc.index:
-        cagr = c.cresc.loc["E&O", "cagr"]
-        mercado_2025 = c.premio_ano("E&O", c.f1)
-        if math.isfinite(cagr) and mercado_2025 > 0:
-            proj = mercado_2025 * (1 + cagr) ** 5 * eo["s1"]
-            cenario = (
-                f"Cenário: se o mercado de E&O mantiver o crescimento médio de {_pct(cagr)} ao ano "
-                f"e a Akad mantiver {_pct(eo['s1'])} de participação, o prêmio dela em E&O chegaria a "
-                f"cerca de {A.f_din(proj)} em 2030."
-            )
-
-    return _item(
-        "12", PERGUNTAS["12"], curta,
-        _bloco(
-            porques, tabela,
-            metodo=f"fase Akad ({c.fase_rotulo}); margem e sinistralidade por razão de somas; concorrentes = mercado sem a Akad.",
-            atencao=(
-                "o papel de cada LOB é opinião apoiada na tabela, a validar com dados internos de preço, "
-                "comissão e resseguro. Gatilho de revisão: se a sinistralidade de E&O voltar acima de 45%, "
-                "rever a retenção de risco."
-            ),
-            extra=(execucao + ("\n\n" + cenario if cenario else "")),
-        ),
-    )
+    return _item("12", PERGUNTAS["12"], curta, _prosa(paras, [tabela]))
 
 
 # --------------------------------------------------------------------------

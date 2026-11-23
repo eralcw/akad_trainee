@@ -305,7 +305,8 @@ def f_num(v, dec: int = 0) -> str:
 def f_pct(v, dec: int = 1) -> str:
     if v is None or (isinstance(v, float) and math.isnan(v)):
         return "–"
-    return f"{v*100:,.{dec}f}%".replace(",", "X").replace(".", ",").replace("X", ".")
+    txt = f"{v*100:,.{dec}f}%".replace(",", "X").replace(".", ",").replace("X", ".")
+    return txt.replace("-", "−")
 
 
 def f_bi(v) -> str:
