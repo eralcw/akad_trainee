@@ -564,23 +564,22 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
     span = max(anos[-1] - anos[0], 1)
 
     def rotulo_painel(l: str) -> str:
-        if l not in trend.index or pd.isna(trend.loc[l, "slope"]):
+        g = lob_ano[lob_ano["lob"] == l].sort_values("ano")
+        if g.empty:
             return l
-        v = trend.loc[l, "slope"]
-        if abs(v) * span < trend.loc[l, "vol"]:
-            return f"{l} · sem tendência clara"
-        return f"{l} · {'−' if v < 0 else '+'}{abs(v)*100:.1f} pp/ano".replace(".", ",")
+        ini, fim = g["sinistralidade"].iloc[0], g["sinistralidade"].iloc[-1]
+        return f"{l} · {analise.f_pct(ini)} → {analise.f_pct(fim)}"
 
     d9 = lob_ano.copy()
     d9["painel"] = d9["lob"].map(rotulo_painel)
     fig = px.line(
         d9, x="ano", y="sinistralidade", color="lob", facet_col="painel",
-        facet_col_wrap=3, markers=True, color_discrete_map=analise.LOB_COR,
+        facet_col_wrap=2, markers=True, color_discrete_map=analise.LOB_COR,
         labels={"ano": "", "sinistralidade": "", "lob": ""},
     )
-    fig.update_traces(line=dict(width=2), marker=dict(size=4))
+    fig.update_traces(line=dict(width=2), marker=dict(size=5, symbol="circle"))
     fig.update_yaxes(matches=None, tickformat=".1%", showticklabels=True, nticks=4)
-    fig.update_xaxes(dtick=max(1, span // 2 if span > 1 else 1))
+    fig.update_xaxes(dtick=1, tickfont=dict(size=10))
     fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1], font=dict(size=12)))
     fig.update_layout(showlegend=False)
     melhora = [l for l in trend.index if pd.notna(trend.loc[l, "slope"])
@@ -593,10 +592,10 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
     if vol_max is not None:
         pedacos.append(f"{vol_max} é a mais instável")
     titulo_q9 = "; ".join(pedacos) if pedacos else "Tendência da sinistralidade por LOB"
-    _plot(fig, 560, legend=False,
+    _plot(fig, 760, legend=False,
           titulo=titulo_q9,
-          sub="um painel por LOB, escala própria; título do painel = tendência anual",
-          legenda="Um painel por LOB, com escala própria; a inclinação da reta aparece no título de cada painel.")
+          sub="um painel por LOB, escala própria; o título traz a sinistralidade do primeiro e do último ano",
+          legenda="Um painel por LOB, com escala própria. O título de cada painel mostra a sinistralidade do primeiro e do último ano; a inclinação da tendência está na tabela abaixo.")
 
     _tab(
         trend.reset_index(),
@@ -616,23 +615,20 @@ def _sinistralidade(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFra
         color_discrete_map=analise.LOB_COR, size_max=45,
         labels={"vol": "oscilação (desvio-padrão)", "sin_media": "média anual", "lob": ""},
     )
-    fig.update_traces(textposition="top center", textfont=dict(size=12))
+    fig.update_traces(textposition="middle right", textfont=dict(size=11.5, color=INK))
     xmax, ymax = float(tr["vol"].max()), float(tr["sin_media"].max())
     xmin, ymin = float(tr["vol"].min()), float(tr["sin_media"].min())
-    fig.update_xaxes(tickformat=".0%", range=[max(0, xmin - xmax * 0.22), xmax * 1.18])
-    fig.update_yaxes(tickformat=".0%", range=[max(0, ymin * 0.55), ymax * 1.24])
+    fig.update_xaxes(tickformat=".0%", range=[max(0, xmin - xmax * 0.20), xmax * 1.38])
+    fig.update_yaxes(tickformat=".0%", range=[max(0, ymin * 0.60), ymax * 1.20])
     mx, my = float(tr["vol"].mean()), float(tr["sin_media"].mean())
     fig.add_vline(x=mx, line_dash="dot", line_color=RULE)
     fig.add_hline(y=my, line_dash="dot", line_color=RULE)
-    for x, y, txt in [
-        (max(0, xmin - xmax * 0.2), ymax * 1.2, "risco baixo · previsível"),
-        (xmax * 1.14, ymax * 1.2, "risco alto · instável"),
-    ]:
-        fig.add_annotation(x=x, y=y, text=txt, showarrow=False,
-                           font=dict(size=11, color=MUTED), xanchor="left" if x < mx else "right")
     _plot(fig, 400, legend=False,
           titulo="Garantia tem o menor risco; RCG é a mais instável",
-          sub="tamanho = prêmio; eixo Y = média simples dos anos (a Q3 usa razão de somas)", legenda="Tamanho da bolha = prêmio; eixo vertical = média anual; o quadrante inferior esquerdo é o melhor.")
+          sub="tamanho = prêmio; eixo Y = média simples dos anos (a Q3 usa razão de somas)",
+          legenda="Tamanho da bolha = prêmio; eixo horizontal = oscilação anual; eixo vertical = média. "
+                  "O melhor lugar é o canto inferior esquerdo: risco baixo e estável. "
+                  "As linhas pontilhadas marcam a média das cinco LOBs.")
     st.caption(resp[8]["curta"])
 
     # ---------------- Q4 ----------------
@@ -854,43 +850,49 @@ def _akad(base_f: pd.DataFrame, resp: list[dict]) -> None:
          "rank0": f"Posição {ano_a}", "rank1": f"Posição {ano_b}", "cresc": "Crescimento"},
     )
 
+    # posicao da Akad por ano (1 = lider), um grafico unico
     linhas = []
+    n_por_ano = {}
     for lname in analise.LOB_ORDEM:
         for ano in anos:
-            g = base_f[(base_f["lob"] == lname) & (base_f["ano"] == ano)]
-            if g.empty:
+            g = base_f[(base_f["lob"] == lname) & (base_f["ano"] == ano) & (base_f["premio_ganho"] > 0)]
+            if g.empty or analise.AKAD not in set(g["codigo_susep"]):
                 continue
-            total = float(g["premio_ganho"].sum())
-            ak = float(g.loc[g["codigo_susep"] == analise.AKAD, "premio_ganho"].sum())
-            linhas.append({"lob": lname, "ano": ano, "share": ak / total if total > 0 else 0})
+            p = g.groupby("codigo_susep")["premio_ganho"].sum()
+            rank = int(p.rank(ascending=False, method="min").loc[analise.AKAD])
+            linhas.append({"lob": lname, "ano": ano, "rank": rank})
+            n_por_ano[ano] = max(n_por_ano.get(ano, 0), len(p))
     df = pd.DataFrame(linhas)
     if not df.empty:
         fig = px.line(
-            df, x="ano", y="share", color="lob", facet_col="lob", facet_col_wrap=3,
-            markers=True, color_discrete_map=analise.LOB_COR,
-            labels={"ano": "", "share": "", "lob": ""},
+            df, x="ano", y="rank", color="lob", markers=True,
+            color_discrete_map=analise.LOB_COR,
+            labels={"ano": "", "rank": "posição da Akad", "lob": ""},
         )
-        fig.update_traces(line=dict(width=2), marker=dict(size=4))
-        fig.update_yaxes(matches=None, tickformat=".1%", showticklabels=True, nticks=4)
-        fig.update_xaxes(dtick=max(1, (ano_b - ano_a) // 2))
-        fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1], font=dict(size=12)))
-        fig.update_layout(showlegend=False)
+        fig.update_traces(line=dict(width=2.2), marker=dict(size=6))
+        rank_max = int(df["rank"].max())
+        passo = 5 if rank_max > 10 else 1
+        fig.update_yaxes(dtick=passo, range=[rank_max + 1.5, 0.5],
+                         title=dict(text="posição (1º no topo)"))
+        fig.update_xaxes(dtick=1)
         if 2022 in anos:
-            fig.add_vrect(x0=ano_a - 0.4, x1=2021.5, fillcolor="#9AA0B5", opacity=0.10, line_width=0)
+            fig.add_vrect(x0=ano_a - 0.45, x1=2021.5, fillcolor="#9AA0B5", opacity=0.12, line_width=0)
             fig.add_vline(x=2022, line_dash="dash", line_color=MUTED, line_width=1)
         ganhou = []
         for lname, g in df.groupby("lob"):
             g = g.sort_values("ano")
-            if len(g) >= 2 and g["share"].iloc[-1] > g["share"].iloc[0] + 0.005:
+            if len(g) >= 2 and g["rank"].iloc[-1] < g["rank"].iloc[0]:
                 ganhou.append(lname)
         titulo_share = (
-            f"A Akad ganhou participação em {', '.join(ganhou)}"
-            if ganhou else "Participação da Akad por LOB e ano"
+            f"A Akad subiu de posição em {', '.join(ganhou)}"
+            if ganhou else "Posição da Akad por LOB e ano"
         )
-        _plot(fig, 480, legend=False,
+        _plot(fig, 420, legend=True,
               titulo=titulo_share,
-              sub="um painel por LOB, escala própria; faixa cinza = fase Argo; linha vertical = 2022 (marca Akad)",
-              legenda="Um painel por LOB; faixa cinza = fase Argo; linha vertical = 2022, quando a marca Akad foi lançada.")
+              sub=f"posição da Akad entre as seguradoras da LOB, de {ano_a} a {ano_b}; 1º no topo",
+              legenda="Eixo vertical = posição da Akad na LOB (1º no topo; mais perto do topo é melhor). "
+                      "Faixa cinza = fase Argo; linha vertical = 2022, quando a marca Akad foi lançada. "
+                      "A participação em % está na tabela acima.")
     st.caption(resp[9]["curta"])
 
     # ---------------- grafico-chave: Transportes ----------------
