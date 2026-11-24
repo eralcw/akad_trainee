@@ -1081,8 +1081,8 @@ def _q11(c: _Ctx) -> dict:
 # --------------------------------------------------------------------------
 
 PAPEL = {
-    "E&O": ("Núcleo", "defender e expandir"),
-    "Transportes": ("Corrigir", "rentabilizar antes de crescer"),
+    "Transportes": ("Prioridade", "rentabilizar, aceitando perder participação"),
+    "E&O": ("Motor de lucro", "proteger e expandir"),
     "RCG": ("Aposta seletiva", "crescer em nicho, com limite de exposição"),
     "Garantia": ("Opcional", "manter em nicho e rever o resseguro"),
     "Empresarial": ("Opcional", "manter o tamanho até a margem melhorar"),
@@ -1122,61 +1122,72 @@ def _q12(c: _Ctx) -> dict:
         }
 
     eo, tr = dados.get("E&O"), dados.get("Transportes")
-    impacto = (tr["mg_m"] - tr["mg_a"]) * tr["premio_a"] if tr else math.nan
-    curta = "Na minha opinião, a Akad deveria focar em E&O."
+    curta = "Na minha opinião, a Akad deve focar em Transportes, com o objetivo de rentabilizar, e não de crescer."
+
+    def _margem_ano(l: str, ano: int, so_akad: bool) -> float:
+        g = c.base[(c.base["lob"] == l) & (c.base["ano"] == ano)]
+        if so_akad:
+            g = g[g["codigo_susep"] == AKAD]
+        return A.metricas(g)["margem"] if not g.empty else math.nan
+
+    def _sin_ano(l: str, ano: int, so_akad: bool) -> float:
+        g = c.base[(c.base["lob"] == l) & (c.base["ano"] == ano)]
+        if so_akad:
+            g = g[g["codigo_susep"] == AKAD]
+        return A.metricas(g)["sinistralidade"] if not g.empty else math.nan
 
     paras = []
-    if eo:
+    if tr:
+        mg_a = _margem_ano("Transportes", c.f1, True)
+        mg_m = _margem_ano("Transportes", c.f1, False)
+        sin_a = _sin_ano("Transportes", c.f1, True)
+        sin_m = _sin_ano("Transportes", c.f1, False)
+        premium_ano = c.premio_ano("Transportes", c.f1, True)
+        impacto_ano = (mg_m - mg_a) * premium_ano if not _nan(mg_m) and not _nan(mg_a) else math.nan
         paras.append(
-            f"E&O é a LOB em que a empresa já lidera, em que obtém a melhor margem e cujo mercado cresce mais rápido. "
-            f"Entre {c.f0} e {c.f1}, a carteira gerou {_brl(eo['lucro_a'])} de lucro sobre {_brl(eo['premio_a'])} de prêmio, "
-            f"uma margem de {_pct(eo['mg_a'])}"
-            + (f", enquanto o mercado de E&O cresceu, em média, {_pct(c.cresc.loc['E&O', 'cagr'])} ao ano."
-               if not c.cresc.empty and "E&O" in c.cresc.index else ".")
-        )
-    if tr and not _nan(impacto):
-        paras.append(
-            f"Uma objeção natural é que Transportes tem mais dinheiro em jogo. Se a Akad tivesse operado essa carteira com "
-            f"a margem média do mercado, seu lucro teria sido cerca de {_brl(impacto)} maior"
-            + (f", um valor superior a todo o lucro gerado por E&O no período." if eo and impacto > eo["lucro_a"] else ".")
-            + f" Mesmo assim, Transportes não deve ser o foco de crescimento: recuperar margem exige reprecificar e reduzir a "
-            f"exposição aos segmentos deficitários, o que provavelmente significa crescer menos ou até perder participação. "
-            f"É uma prioridade de correção, cujo resultado ajudará a financiar a expansão de E&O."
+            f"A razão é de tamanho e de resultado. Transportes responde por {_pct(tr['mix'], 0)} do prêmio da Akad e, em "
+            f"{c.f1}, operou com margem de {_pct(mg_a)} e sinistralidade de {_pct(sin_a)}, contra {_pct(mg_m)} e "
+            f"{_pct(sin_m)} do mercado. Levar a margem dessa carteira ao nível do mercado acrescentaria cerca de "
+            f"{_brl(impacto_ano)} ao lucro por ano, já no próximo exercício."
         )
     if eo:
         mercado_2025 = c.premio_ano("E&O", c.f1)
+        premio_akad_2025 = c.premio_ano("E&O", c.f1, True)
         proj = ""
+        lucro_inc = math.nan
         if not c.cresc.empty and "E&O" in c.cresc.index and math.isfinite(c.cresc.loc["E&O", "cagr"]):
+            projetado = mercado_2025 * (1 + c.cresc.loc["E&O", "cagr"]) ** 5 * eo["s1"]
+            lucro_inc = (projetado - premio_akad_2025) * eo["mg_a"]
             proj = (
-                f" Se mantiver os {_pct(eo['s1'])} atuais e o mercado continuar crescendo no ritmo recente, a carteira de "
-                f"E&O da Akad chegaria a cerca de {_brl(mercado_2025 * (1 + c.cresc.loc['E&O', 'cagr']) ** 5 * eo['s1'])} em 2030."
+                f" Mesmo mantendo os {_pct(eo['s1'])} de participação e o ritmo de crescimento do mercado, a carteira "
+                f"chegaria a {_brl(projetado)} em 2030, o que adiciona cerca de {_brl(lucro_inc)} de lucro por ano, mas só "
+                "a partir de 2030. O ganho anual é parecido com o de Transportes, porém o de Transportes vem antes e com "
+                "menos incerteza."
             )
         paras.append(
-            f"Em termos de crescimento, o desafio de E&O é o tamanho do mercado, que somou {_brl(mercado_2025)} em {c.f1}. "
-            "Por isso a Akad precisa ampliar o mercado, e não apenas ganhar participação: levar o seguro a novas profissões "
-            "e a pequenas e médias empresas, e oferecer coberturas complementares à mesma base de clientes." + proj
+            f"E&amp;O continua sendo o motor de lucro e deve ser protegida e expandida: é onde a Akad lidera, com "
+            f"{_pct(eo['s1'])} do prêmio, margem de {_pct(eo['mg_a'])} contra {_pct(eo['mg_m'])} do mercado, e o mercado "
+            f"cresce {_pct(c.cresc.loc['E&O', 'cagr']) if not c.cresc.empty and 'E&O' in c.cresc.index else '–'} ao ano. "
+            f"Mas o mercado inteiro de E&amp;O somou {_brl(mercado_2025)} em {c.f1}." + proj
         )
-    if tr:
-        paras.append(
-            f"Do lado da lucratividade, a meta em Transportes deveria ser sair dos {_pct(tr['mg_a'])} de margem atuais para "
-            "pelo menos 10% em dois anos, com preços calculados por rota e tipo de carga e o abandono dos segmentos que dão "
-            "prejuízo."
-        )
+        k = _contribuicoes(fase, "E&O")
+        if not _nan(k.get("resseg")) and k["resseg"] > 0:
+            paras.append(
+                f"Há ainda um cuidado em E&amp;O: {_pp(k['resseg'])} da vantagem de margem vêm de reter mais risco que o "
+                "mercado, e em responsabilidade profissional os sinistros costumam aparecer anos depois da venda, de modo "
+                "que seis anos de dados podem subestimar o custo. Por isso, se a sinistralidade voltar acima de 45%, a "
+                "recomendação é ampliar a cessão de risco."
+            )
     paras.append(
-        "Os canais de venda e a infraestrutura tornam essa estratégia viável. O corretor deve continuar no centro da "
-        "distribuição, apoiado por cotação e emissão automáticas, integradas por API, que reduzam o custo de cada venda. "
-        "A esse canal se soma o seguro embarcado em parceiros, como plataformas de serviços profissionais, fintechs e varejo, "
-        "especialmente útil em Empresarial, onde a despesa comercial é hoje o principal obstáculo à rentabilidade. A "
-        "infraestrutura de dados também precisa sustentar modelos de preço mais finos e uma regulação de sinistros mais ágil."
+        "Em Transportes, a estratégia é reprecificar por rota e tipo de carga, selecionar melhor o risco, rever as comissões "
+        "e aceitar perder participação onde o preço não fecha. Em E&amp;O, expandir com disciplina de capital, levando o "
+        "seguro a novas profissões e a pequenas e médias empresas. RCG entra como aposta seletiva; Garantia e Empresarial "
+        "ficam como opcionais até a margem melhorar."
     )
-    if eo:
-        paras.append(
-            "Por fim, há uma questão de capital. Parte da vantagem de margem da Akad em E&O vem de reter mais risco do que o "
-            "mercado, o que funciona bem nos anos bons, mas exige capital e aumenta a exposição a sinistros grandes. À medida "
-            "que a carteira crescer, recomendo revisar a política de resseguro e definir um gatilho claro: se a "
-            "sinistralidade de E&O voltar a superar 45%, a empresa deve ampliar a cessão de risco. Essas recomendações partem "
-            "dos dados públicos do SES e precisam ser validadas com informações internas de preço, comissões e resseguro."
-        )
+    paras.append(
+        "Essa é a minha opinião, apoiada nos números do SES. Ela precisa ser validada com dados internos de preço, comissão "
+        "por canal e contratos de resseguro, que o SES não publica."
+    )
 
     linhas = []
     for l in lobs:
@@ -1188,8 +1199,9 @@ def _q12(c: _Ctx) -> dict:
             _pct(d["mix"], 0), f"{papel}: {acao}",
         ])
     tabela = _tabela(
-        ["LOB", "Participação", "Margem Akad vs mercado", "Sinistralidade Akad vs mercado",
-         "Lucro Akad", "Peso no prêmio da Akad", "Papel recomendado"],
+        ["LOB", "Participação em 2025", "Margem na fase vs mercado",
+         "Sinistralidade na fase vs mercado", "Lucro na fase", "Peso no prêmio em 2025",
+         "Papel recomendado"],
         linhas, esq={0, 6},
     )
     return _item("12", PERGUNTAS["12"], curta, _prosa(paras, [tabela]))

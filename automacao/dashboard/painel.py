@@ -1094,7 +1094,7 @@ def _recomendacao(base_f: pd.DataFrame, resp: list[dict]) -> None:
         return
     dd = pd.DataFrame(dados)
 
-    cores = {"Núcleo": analise.COR_AKAD, "Corrigir": "#C8451F",
+    cores = {"Prioridade": "#C8451F", "Motor de lucro": analise.COR_AKAD,
              "Aposta seletiva": LILAC, "Opcional": NEGATIVO}
     fig = px.scatter(
         dd, x="share", y="gap", size="premio", color="papel", text="lob",
@@ -1119,7 +1119,7 @@ def _recomendacao(base_f: pd.DataFrame, resp: list[dict]) -> None:
     fig.update_yaxes(tickformat="+.0f", ticksuffix=" pp")
     prioridade = [r.lob for r in sorted(dd.itertuples(), key=lambda x: -x.share) if r.share >= 0.02 and r.gap > 0]
     titulo_mat = (
-        f"{', '.join(prioridade)}: participação relevante e margem acima dos concorrentes"
+        f"Onde a Akad já ganha margem: {', '.join(prioridade)}"
         if prioridade else "Participação e margem da Akad por LOB"
     )
     _plot(fig, 420, legend=True,
@@ -1127,25 +1127,40 @@ def _recomendacao(base_f: pd.DataFrame, resp: list[dict]) -> None:
           sub=f"fase Akad ({rot}); tamanho = prêmio; acima da linha = margem melhor que os concorrentes",
           legenda="Cor = papel estratégico; tamanho = prêmio da Akad; acima da linha = margem melhor que os concorrentes.")
 
-    # impacto de Transportes na margem dos concorrentes
+    # impacto anual: Transportes agora contra E&O em 2030
     tr = dd[dd["lob"] == "Transportes"]
     eo = dd[dd["lob"] == "E&O"]
     if not tr.empty:
-        t = tr.iloc[0]
-        impacto = (t["mg_m"] - t["mg_a"]) * t["premio"]
-        barras = [("Transportes na margem dos concorrentes", impacto, "#2E7D5B")]
+        ultimo_ano = int(base_f["ano"].max())
+        tr25 = base_f[(base_f["lob"] == "Transportes") & (base_f["ano"] == ultimo_ano)]
+        ak25 = tr25[tr25["codigo_susep"] == analise.AKAD]
+        impact_tr = (analise.metricas(tr25)["margem"] - analise.metricas(ak25)["margem"]) * float(ak25["premio_ganho"].sum())
+
+        impact_eo = 0.0
         if not eo.empty:
-            barras.append(("Lucro de E&O na fase Akad", float(eo.iloc[0]["lucro"]), analise.LOB_COR["E&O"]))
+            mkt = float(base_f[(base_f["lob"] == "E&O") & (base_f["ano"] == ultimo_ano)]["premio_ganho"].sum())
+            ak_eo = float(base_f[(base_f["lob"] == "E&O") & (base_f["ano"] == ultimo_ano)
+                                 & (base_f["codigo_susep"] == analise.AKAD)]["premio_ganho"].sum())
+            cresc = analise.crescimento(base_f)
+            if "E&O" in cresc.index and mkt > 0:
+                projetado = mkt * (1 + cresc.loc["E&O", "cagr"]) ** 5 * (ak_eo / mkt)
+                impact_eo = (projetado - ak_eo) * float(eo.iloc[0]["mg_a"])
+
+        barras = [("Transportes, a partir de 2026", impact_tr, "#2E7D5B")]
+        if impact_eo > 0:
+            barras.append(("E&O, a partir de 2030", impact_eo, analise.LOB_COR["E&O"]))
         fig = go.Figure(go.Bar(
             x=[b[1] for b in barras], y=[b[0] for b in barras], orientation="h",
             marker_color=[b[2] for b in barras],
             text=[analise.f_din(b[1]) for b in barras], textposition="outside",
         ))
-        fig.update_xaxes(tickformat=",.0f", range=[0, max(b[1] for b in barras) * 1.25])
+        fig.update_xaxes(tickformat=",.0f", range=[0, max(b[1] for b in barras) * 1.28])
         fig.update_yaxes(title=None)
-        _plot(fig, 240, legend=False, xtitle="R$",
-              titulo=f"Corrigir Transportes vale {analise.f_din(impacto)} — mais que todo o lucro de E&O",
-              sub=f"se Transportes tivesse a margem dos concorrentes ({analise.f_pct(t['mg_m'])}) sobre o prêmio da fase", legenda="Verde = ganho potencial de Transportes; rosa = lucro de E&O no mesmo período.")
+        _plot(fig, 250, legend=False, xtitle="ganho de lucro por ano",
+              titulo="Os ganhos anuais se equivalem, mas o de Transportes vem antes",
+              sub=f"Transportes: margem de {ultimo_ano} levada ao nível do mercado. E&O: incremento anual do cenário de 2030.",
+              legenda="Verde = ganho anual que começa no próximo exercício; rosa = ganho anual que só aparece em 2030, "
+                      "mantidos a participação e o crescimento do mercado.")
 
     _sub("Papel de cada LOB")
     _tab(
