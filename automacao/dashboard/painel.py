@@ -276,10 +276,11 @@ def _base_cache() -> pd.DataFrame:
 # --------------------------------------------------------------------------
 
 def _visao(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFrame, resp: list[dict]) -> None:
+    anos = sorted(int(a) for a in lob_ano["ano"].unique())
     m = analise.metricas(base_f)
     _ledger(
         [
-            ("Prêmio ganho", analise.f_bi(m["premio"]), "período filtrado"),
+            ("Prêmio ganho", analise.f_bi(m["premio"]), "soma dos anos filtrados"),
             ("Sinistralidade", analise.f_pct(m["sinistralidade"]), "soma de sinistros ÷ soma de prêmios"),
             ("Resultado técnico", analise.f_bi(m["lucro"]), "não é lucro contábil"),
             ("Margem", analise.f_pct(m["margem"]), "resultado técnico ÷ prêmio"),
@@ -301,8 +302,13 @@ def _visao(lob: pd.DataFrame, lob_ano: pd.DataFrame, base_f: pd.DataFrame, resp:
         for _, g in lob_ano.groupby("lob")
     )
     titulo = f"{topo} lidera em todos os anos" + ("; todas as LOBs cresceram" if cresceu else "")
-    _plot(fig, 360, ytitle="R$ bilhões", legend=True,
-          titulo=titulo, sub="prêmio ganho por LOB e ano, valores nominais")
+    total_topo = float(lob.loc[lob["lob"] == topo, "premio"].sum())
+    ultimo = lob_ano[(lob_ano["lob"] == topo) & (lob_ano["ano"] == anos[-1])]["premio"].sum()
+    _plot(fig, 360, ytitle="R$ bilhões por ano", legend=True,
+          titulo=titulo,
+          sub="valor de cada ano, em R$ bilhões; não é o acumulado",
+          legenda=f"Cada ponto é o prêmio daquele ano. Em {topo}, {anos[-1]} somou {analise.f_bi(float(ultimo))}; "
+                  f"a soma de {anos[0]} a {anos[-1]} é {analise.f_bi(total_topo)}, o número da Q1.")
 
     pv = lob_ano.pivot(index="lob", columns="ano", values="sinistralidade")
     pv = pv.reindex([l for l in analise.LOB_ORDEM if l in pv.index])
