@@ -1,0 +1,27 @@
+{
+  "run_id": "20261124T192737",
+  "comando": "periodo",
+  "inicio": "2026-11-24T19:27:06",
+  "periodo": {
+    "aprovado": true,
+    "falhas_coleta": [],
+    "publicado": true,
+    "atualizacao": "20261124T192737",
+    "linhas": 69,
+    "periodo_ini": "202507",
+    "periodo_fim": "202509",
+    "ano": 2025,
+    "mes_inicio": 7,
+    "mes_fim": 9,
+    "meses": 3,
+    "ramos": [
+      "0118"
+    ],
+    "lobs": [
+      "Empresarial"
+    ],
+    "parcial": true
+  },
+  "fim": "2026-11-24T19:27:37",
+  "sucesso": true
+}

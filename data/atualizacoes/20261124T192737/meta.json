@@ -1,0 +1,77 @@
+{
+  "atualizacao": "20261124T192737",
+  "criado_em": "2026-11-24T19:27:37",
+  "linhas": 69,
+  "relatorio": {
+    "aprovado": true,
+    "erros": [],
+    "avisos": [
+      "9 linhas com sinistro_ocorrido negativo (estornos/ajustes)",
+      "13 linhas com receita_resseguro negativo (estornos/ajustes)"
+    ],
+    "cobertura": {
+      "esperadas": 1,
+      "lidas": 1,
+      "vazias": 0,
+      "totais_conferidos": 1
+    },
+    "linhas": 69,
+    "parcial": true
+  },
+  "periodo_ini": "202507",
+  "periodo_fim": "202509",
+  "ano": 2025,
+  "mes_inicio": 7,
+  "mes_fim": 9,
+  "meses": 3,
+  "ramos": [
+    "0118"
+  ],
+  "lobs": [
+    "Empresarial"
+  ],
+  "parcial": true,
+  "diagnosticos": [
+    {
+      "chave": "0118_2025_07_09",
+      "arquivo": "ses_ramo0118_2025_0709_20261124T192734.xls",
+      "fonte": "export_xls",
+      "erro": null,
+      "hash_ok": true,
+      "n_seguradoras": 69,
+      "totais": {
+        "premio_ganho": {
+          "soma": 1184995478.0,
+          "oficial": 1184995477.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "sinistro_ocorrido": {
+          "soma": 439001195.0,
+          "oficial": 439001196.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "despesa_resseguro": {
+          "soma": 227758660.0,
+          "oficial": 227758659.0,
+          "dif": 1.0,
+          "ok": true
+        },
+        "receita_resseguro": {
+          "soma": 125185224.0,
+          "oficial": 125185220.0,
+          "dif": 4.0,
+          "ok": true
+        },
+        "despesa_comercial": {
+          "soma": 332229290.0,
+          "oficial": 332229292.0,
+          "dif": 2.0,
+          "ok": true
+        }
+      },
+      "rodape_ok": true
+    }
+  ]
+}
