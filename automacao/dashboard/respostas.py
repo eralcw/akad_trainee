@@ -872,11 +872,12 @@ def _q10(c: _Ctx) -> dict:
             ratio = (agg["sinistro_ocorrido"] / agg["premio_ganho"]).dropna().sort_values(ascending=False)
             if not ratio.empty:
                 piores = [f"{_pct(v)} em {l}" for l, v in ratio.head(3).items()]
+                lista_piores = _lista(piores)
                 paras.append(
                     "O momento das mudanças ajuda a entender as causas. O primeiro salto coincide com a troca de controle: "
                     "a GP Investments e a CyberLabs concluíram a compra da Argo em 2022 e lançaram a marca Akad em junho "
                     f"daquele ano. A nova gestão herdou uma carteira com resultados ruins: em 2021, a sinistralidade havia "
-                    f"chegado a {piores[0]}, {piores[1]} e {piores[2]}."
+                    f"chegado a {lista_piores}."
                 )
 
     tr = ak.loc["Transportes"] if "Transportes" in ak.index else None

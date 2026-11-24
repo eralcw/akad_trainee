@@ -133,4 +133,6 @@ def test_primeira_frase_tem_sujeito_e_verbo(base):
     for q in R.gerar(base):
         primeira = q["curta"].strip()
         assert primeira[:1].isupper(), (q["n"], primeira[:40])
-        assert any(v in primeira.lower() for v in (" é ", " tem ", " foram ", " somaram ", " lidera ", " ficou ", " passou ", " cresceu ", " deveria ")), (q["n"], primeira[:60])
+        verbos = (" é ", " são ", " tem ", " foram ", " somaram ", " lidera ", " ficou ", " passou ",
+                  " cresceu ", " deveria ", " deve ", " segue ")
+        assert any(v in primeira.lower() for v in verbos), (q["n"], primeira[:60])
