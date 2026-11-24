@@ -1185,7 +1185,6 @@ def _respostas(resp: list[dict]) -> None:
             )
             corpo = item.get("corpo") or item["resposta"]
             st.markdown(corpo)
-    st.caption("O roteiro completo, com mercado 101 e leitura de cada gráfico, é um documento local em `analise/roteiro_apresentacao.html`.")
 
 
 # --------------------------------------------------------------------------

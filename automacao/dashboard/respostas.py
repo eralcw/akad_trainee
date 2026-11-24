@@ -726,7 +726,7 @@ def _q09(c: _Ctx) -> dict:
     nivel = c.lob["sinistralidade"].idxmin()
     atrativa = c.lob["margem"].idxmax()
     curta = (
-        f"As LOBs seguem trajetórias diferentes, e, na nossa avaliação, {atrativa} é a mais saudável e atrativa."
+        f"As LOBs seguem trajetórias diferentes, e, na minha avaliação, {atrativa} é a mais saudável e atrativa."
     )
 
     paras = []
@@ -777,14 +777,14 @@ def _q09(c: _Ctx) -> dict:
 
     if atrativa != nivel:
         paras.append(
-            f"Na nossa avaliação, {atrativa} é a mais atrativa. {nivel} tem o menor nível de sinistralidade, com "
+            f"Na minha avaliação, {atrativa} é a mais atrativa. {nivel} tem o menor nível de sinistralidade, com "
             f"{_pct(c.lob.loc[nivel, 'sinistralidade'])}, mas é a que menos cresce e não mostra melhora ao longo do período. "
             f"{atrativa} é a única que reúne as três características desejáveis: o crescimento mais rápido, uma sinistralidade "
             f"em queda e a maior margem do conjunto, de {_pct(c.lob.loc[atrativa, 'margem'])}."
         )
     else:
         paras.append(
-            f"Na nossa avaliação, {atrativa} reúne o melhor conjunto: menor sinistralidade, maior margem e crescimento consistente."
+            f"Na minha avaliação, {atrativa} reúne o melhor conjunto: menor sinistralidade, maior margem e crescimento consistente."
         )
 
     tabela = _tabela(
@@ -1123,7 +1123,7 @@ def _q12(c: _Ctx) -> dict:
 
     eo, tr = dados.get("E&O"), dados.get("Transportes")
     impacto = (tr["mg_m"] - tr["mg_a"]) * tr["premio_a"] if tr else math.nan
-    curta = "Na nossa opinião, a Akad deveria focar em E&O."
+    curta = "Na minha opinião, a Akad deveria focar em E&O."
 
     paras = []
     if eo:
@@ -1173,7 +1173,7 @@ def _q12(c: _Ctx) -> dict:
         paras.append(
             "Por fim, há uma questão de capital. Parte da vantagem de margem da Akad em E&O vem de reter mais risco do que o "
             "mercado, o que funciona bem nos anos bons, mas exige capital e aumenta a exposição a sinistros grandes. À medida "
-            "que a carteira crescer, recomendamos revisar a política de resseguro e definir um gatilho claro: se a "
+            "que a carteira crescer, recomendo revisar a política de resseguro e definir um gatilho claro: se a "
             "sinistralidade de E&O voltar a superar 45%, a empresa deve ampliar a cessão de risco. Essas recomendações partem "
             "dos dados públicos do SES e precisam ser validadas com informações internas de preço, comissões e resseguro."
         )
